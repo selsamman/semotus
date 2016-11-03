@@ -269,7 +269,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
                             this._deleteChanges();
                             this._processQueue();
                         }.bind(this));
-                        break;
+                        break; // TODO: nested break is this intended?
                     }
                 }
             }
