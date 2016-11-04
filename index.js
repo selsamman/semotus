@@ -1390,7 +1390,7 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
     if (type == Number) {
         newValue = newValue == null ? null : newValue * 1;
     }
-    // else if (type == String) ;
+    else if (type == String) ; //TODO: Why? This should not be a pattern for if/else ifs
     else if (type == Boolean) {
         newValue = newValue == null ? null : (newValue == "false" ? false : (newValue ? true : false));
     } else if (type == Date) {
