@@ -17,6 +17,7 @@
         "underscore": "1.x"
     },
     "scripts": {
+        "lint": "eslint .",
         "test": "istanbul cover _mocha -- test/* -R spec"
     },
     "directories": {
