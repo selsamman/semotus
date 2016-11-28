@@ -7,7 +7,7 @@
         "q": "1.x",
         "supertype": "1.4.*"
     },
-    "devDependencies" : {=
+    "devDependencies" : {
         "chai": "3.x",
         "eslint": "3.7.x",
         "istanbul": "0.4.5",
