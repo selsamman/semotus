@@ -33,6 +33,7 @@ var RemoteObjectTemplate = ObjectTemplate._createObject();
 RemoteObjectTemplate._useGettersSetters = typeof(window) == "undefined" ? true : false;
 RemoteObjectTemplate.role = (typeof(window) == "undefined") ? "server" : "client";
 RemoteObjectTemplate.__changeTracking__ = true; // Set __changed__ when setter fires
+RemoteObjectTemplate.__conflictMode__ = 'soft';
 
 /**************************** Public Interface **********************************/
 
@@ -89,6 +90,9 @@ RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
     return sessionId;
 }
 RemoteObjectTemplate.deleteSession = function(sessionId) {
+    var session = this._getSession(sessionId);
+    for (var calls in session.remoteCalls)
+        session.remoteCalls[calls].deferred.reject({code: 'reset', text: 'Session resynchronized'});
     if (this.sessions[sessionId])
         delete  this.sessions[sessionId];
 }
@@ -1319,11 +1323,17 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
 
     // Make sure old value that is reported matches current value
     if (!singleDirection && !force && oldValueConverted != currentValueConverted) { // conflict will have to roll back
-        this.logger.error({component: 'semotus', module: 'applyPropertyChange', activity: 'processing'},
-            "Could not apply change to " + obj.__template__.__name__ + "." + prop +
+        var conflictErrorData = {component: 'semotus', module: 'applyPropertyChange', activity: 'processing'};
+        var conflictErrorString = "Could not apply change to " + obj.__template__.__name__ + "." + prop +
             " expecting " +  this.cleanPrivateValues(prop, oldValueConverted, defineProperty) +
-            " but presently " + this.cleanPrivateValues(prop, currentValueConverted, defineProperty));
-        return false;
+            " but presently " + this.cleanPrivateValues(prop, currentValueConverted, defineProperty);
+
+        if ( this.__conflictMode__ == 'hard') {
+            this.logger.error(conflictErrorData, conflictErrorString);
+            return false;
+        } else {
+            this.logger.warn(conflictErrorData, conflictErrorString);
+        }
     }
 
     // Based on type of property we convert the value from it's string representation into
