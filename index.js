@@ -442,7 +442,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
             // If we are out of sync queue up a set Root if on server.  This could occur
             // if a session is restored but their are pending calls
             if (!session.pendingRemoteCalls[remoteCallId])
-                this.logger.error({component: 'semotus', module: 'processMessage', activity: remoteCall.type,
+                this.logger.warn({component: 'semotus', module: 'processMessage', activity: remoteCall.type,
                     data: {call: remoteCall.name, sequence: remoteCall.sequence}},  "No remote call pending");
             else {
                 if (typeof(remoteCall.sync) != 'undefined') {
