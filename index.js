@@ -33,7 +33,7 @@ var RemoteObjectTemplate = ObjectTemplate._createObject();
 RemoteObjectTemplate._useGettersSetters = typeof(window) == "undefined" ? true : false;
 RemoteObjectTemplate.role = (typeof(window) == "undefined") ? "server" : "client";
 RemoteObjectTemplate.__changeTracking__ = true; // Set __changed__ when setter fires
-RemoteObjectTemplate.__conflictMode__ = 'soft';
+RemoteObjectTemplate.__conflictMode__ = 'hard';
 
 /**************************** Public Interface **********************************/
 
