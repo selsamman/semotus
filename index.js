@@ -676,7 +676,10 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function () {
 
     function count(idMap) {
         var ix = 0;
-        _.map(idMap, function () {ix++;});
+
+        _.map(idMap, function () {
+            ix++;
+        });
 
         return ix;
     }
@@ -1026,7 +1029,9 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         // Getter
         defineProperty.get = (function () {
             // use closure to record property name which is not passed to the getter
-            var prop = propertyName; return function () {
+            var prop = propertyName;
+
+            return function () {
                 if (!defineProperty.isVirtual && this['__' + prop] instanceof Array) {
                     objectTemplate._referencedArray(this, prop, this['__' + prop]);
                 }
@@ -1060,7 +1065,9 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
 
         defineProperty.get = (function () {
             // Use closure to record property name which is not passed to the getter
-            var prop = propertyName; return function () {
+            var prop = propertyName;
+
+            return function () {
 
                 if (userGetter) {
                     if (defineProperty.isVirtual) {
@@ -1579,13 +1586,16 @@ RemoteObjectTemplate.getObject = function(objId, template) {
  * @private
  */
 RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
-    var session = this._getSession();    var rollback = [];
+    var session = this._getSession();
+    var rollback = [];
+
     this.processingSubscription = this._getSubscription(subscriptionId);
 
     // Walk through change queue looking for objects and applying new values or rolling back
     // if previous values don't match what changer things they are
     this.changeCount = 0;
     this.changeString = {};
+
     var hasObjects = false;
 
     for (var objId in changes) {
@@ -2161,8 +2171,10 @@ RemoteObjectTemplate._toTransport = function clone(obj) {
     }
     else if (obj instanceof Array) {
         res = {type: 'array', value: []};
-        for (var ix = 0; ix < obj.length; ++ix)
-            {res.value[ix] = this._toTransport(obj[ix]);}
+
+        for (var ix = 0; ix < obj.length; ++ix) {
+            res.value[ix] = this._toTransport(obj[ix]);
+        }
     }
     else if (typeof(obj) == 'number' || obj instanceof Number) {
         res = {type: 'number', value: Number(obj)};
