@@ -53,7 +53,7 @@ RemoteObjectTemplate.maxClientSequence = 1;
  * @param {unknown} level unknown
  * @param {unknown} data unknown
  */
-RemoteObjectTemplate.log = function (level, data) {
+RemoteObjectTemplate.log = function log(level, data) {
     // OBSOLETE
     if (level > this.logLevel) {
         return;
@@ -83,7 +83,7 @@ RemoteObjectTemplate.log = function (level, data) {
  *
  * @returns {*} unknown
  */
-RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
+RemoteObjectTemplate.createSession = function createSession(role, sendMessage, sessionId) {
 
     if (!this.sessions) {
         this.nextSubscriptionId = 0;
@@ -132,7 +132,7 @@ RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
  *
  * @param {unknown} sessionId unknown
  */
-RemoteObjectTemplate.deleteSession = function(sessionId) {
+RemoteObjectTemplate.deleteSession = function deleteSession(sessionId) {
     var session = this._getSession(sessionId);
 
     for (var calls in session.remoteCalls) {
@@ -149,7 +149,7 @@ RemoteObjectTemplate.deleteSession = function(sessionId) {
  *
  * @param {unknown} nextObjId unknown
  */
-RemoteObjectTemplate.setMinimumSequence = function(nextObjId) {
+RemoteObjectTemplate.setMinimumSequence = function setMinimumSequence(nextObjId) {
     this._getSession().nextObjId = Math.max(nextObjId, this._getSession().nextObjId);
 };
 
@@ -160,7 +160,7 @@ RemoteObjectTemplate.setMinimumSequence = function(nextObjId) {
  *
  * @returns {Object} unknown
  */
-RemoteObjectTemplate.saveSession = function(sessionId) {
+RemoteObjectTemplate.saveSession = function saveSession(sessionId) {
     var session = this._getSession(sessionId);
 
     session.nextSaveSessionId = session.nextSaveSessionId + 1;
@@ -188,7 +188,7 @@ RemoteObjectTemplate.saveSession = function(sessionId) {
  *
  * @returns {unknown} unknown
  */
-RemoteObjectTemplate.getPendingCallCount = function(sessionId) {
+RemoteObjectTemplate.getPendingCallCount = function getPendingCallCount(sessionId) {
     var session = this._getSession(sessionId);
 
     return session.pendingRemoteCalls.length;
@@ -205,7 +205,7 @@ RemoteObjectTemplate.getPendingCallCount = function(sessionId) {
  *
  * @returns {Boolean} false means that messages were in flight and a reset is needed
  */
-RemoteObjectTemplate.restoreSession = function(sessionId, savedSession, sendMessage) {
+RemoteObjectTemplate.restoreSession = function restoreSession(sessionId, savedSession, sendMessage) {
     this.setSession(sessionId);
     var session = this.sessions[sessionId];
     this.logger.debug({component: 'semotus', module: 'restoreSession', activity: 'save'});
@@ -231,7 +231,7 @@ RemoteObjectTemplate.restoreSession = function(sessionId, savedSession, sendMess
  *
  * @param {unknown} sessionId unknown
  */
-RemoteObjectTemplate.syncSession = function(sessionId) {
+RemoteObjectTemplate.syncSession = function syncSession(sessionId) {
     this._getSession(sessionId);
     this.getChanges();
     this._deleteChanges();
@@ -243,7 +243,7 @@ RemoteObjectTemplate.syncSession = function(sessionId) {
  *
  * @param {unknown} sessionId unknown
  */
-RemoteObjectTemplate.setSession = function(sessionId) {
+RemoteObjectTemplate.setSession = function setSession(sessionId) {
     this.currentSession = sessionId;
 };
 
@@ -254,7 +254,7 @@ RemoteObjectTemplate.setSession = function(sessionId) {
  * @param {unknown} messageCallback optional call back function
  * @param {unknown} sessionId optional session id
  */
-RemoteObjectTemplate.enableSendMessage = function (value, messageCallback, sessionId) {
+RemoteObjectTemplate.enableSendMessage = function enableSendMessage(value, messageCallback, sessionId) {
     var session = this._getSession(sessionId);
     session.sendMessageEnabled = value;
 
@@ -273,7 +273,7 @@ RemoteObjectTemplate.enableSendMessage = function (value, messageCallback, sessi
  *
  * @returns {*} unknown
  */
-RemoteObjectTemplate.subscribe = function (role) {
+RemoteObjectTemplate.subscribe = function subscribe(role) {
     var subscriptionId = this._getSession().nextSubscriptionId++;
 
     this._getSession().subscriptions[subscriptionId] = {
@@ -296,7 +296,7 @@ RemoteObjectTemplate.subscribe = function (role) {
  *
  * @returns {unknown} unknown
  */
-RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, restoreSessionCallback) {
+RemoteObjectTemplate.processMessage = function processMessage(remoteCall, subscriptionId, restoreSessionCallback) {
     if (!remoteCall) {
         return;
     }
@@ -335,7 +335,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
             }
             else { //TODO: Why is this not an else if clause?
                 if ((this.reqSession.semotus.callStartTime + this.maxCallTime) > (new Date()).getTime()) {
-                    Q.delay(5000).then(function () {
+                    Q.delay(5000).then(function a() {
                         this.logger.warn({component: 'semotus', module: 'processMessage', activity: 'blockingCall',
                                 data: {call: remoteCall.name, sequence: remoteCall.sequence}}, remoteCall.name);
                         session.sendMessage({type: 'response', sync: false, changes: '', remoteCallId: remoteCallId});
@@ -415,7 +415,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
      *
      * @returns {unknown} unknown
      */
-    function processCall (forceupdate) {
+    function processCall(forceupdate) {
         return Q(forceupdate)
             .then(preCallHook.bind(this))
             .then(applyChangesAndValidateCall.bind(this))
@@ -430,7 +430,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
      *
      * @returns {*} unknown
      */
-    function retryCall () {
+    function retryCall() {
         if (restoreSessionCallback) {
             restoreSessionCallback();
         }
@@ -445,7 +445,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
      *
      * @returns {unknown} unknown
      */
-    function preCallHook (forceupdate) {
+    function preCallHook(forceupdate) {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'preServerCall',
             data:{call: remoteCall.name, sequence: remoteCall.sequence}}, remoteCall.name);
 
@@ -468,7 +468,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
      *
      * @returns {unknown} unknown
      */
-    function applyChangesAndValidateCall () {
+    function applyChangesAndValidateCall() {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'call',
             data:{call: remoteCall.name, sequence: remoteCall.sequence, remoteCallId: remoteCall.id}}, remoteCall.name);
 
@@ -516,10 +516,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
      *
      * @returns {unknown} unknown
      */
-    function postCallHook (returnValue) {
+    function postCallHook(returnValue) {
         if (this.controller && this.controller['postServerCall']) {
             return Q(this.controller['postServerCall'].call(this.controller, remoteCall.changes.length > 2, callContext))
-                .then(function () {
+                .then(function u() {
                     return returnValue;
                 });
         }
@@ -640,7 +640,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
  *
  * @returns {*} unknown
  */
-RemoteObjectTemplate.serializeAndGarbageCollect = function () {
+RemoteObjectTemplate.serializeAndGarbageCollect = function serializeAndGarbageCollect() {
     var session = this._getSession();
     var idMap = {};
     var itemsBefore = count(session.objects);
@@ -653,9 +653,9 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function () {
 
     return serial;
 
-    function serialize (obj) {
+    function serialize(obj) {
         try {
-            return JSON.stringify(obj, function (_key, value) {
+            return JSON.stringify(obj, function y(_key, value) {
                 if (value && value.__template__ && value.__id__) {
                     if (idMap[value.__id__]) {
                         value = {__id__: value.__id__.toString()};
@@ -677,7 +677,7 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function () {
     function count(idMap) {
         var ix = 0;
 
-        _.map(idMap, function () {
+        _.map(idMap, function w() {
             ix++;
         });
 
@@ -693,7 +693,7 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function () {
  *
  * @returns {*} the message or null
  */
-RemoteObjectTemplate.getMessage = function(sessionId, forceMessage) {
+RemoteObjectTemplate.getMessage = function getMessage(sessionId, forceMessage) {
     var session = this._getSession(sessionId);
     var message = session.remoteCalls.shift();
 
@@ -716,7 +716,7 @@ RemoteObjectTemplate.getMessage = function(sessionId, forceMessage) {
  *
  * @param {unknown} sessionId unknown
  */
-RemoteObjectTemplate.clearPendingCalls = function (sessionId) {
+RemoteObjectTemplate.clearPendingCalls = function clearPendingCalls(sessionId) {
     var session = this._getSession(sessionId);
     session.remoteCalls = [];
 };
@@ -742,7 +742,7 @@ RemoteObjectTemplate.clearPendingCalls = function (sessionId) {
     return messages;
 }
  */
-RemoteObjectTemplate.getChangeGroup = function(type, subscriptionId) {
+RemoteObjectTemplate.getChangeGroup = function getChangeGroup(type, subscriptionId) {
     return this._getSubscription(subscriptionId).log[type];
 };
 
@@ -752,7 +752,7 @@ RemoteObjectTemplate.getChangeGroup = function(type, subscriptionId) {
  * @param {unknown} type unknown
  * @param {unknown} subscriptionId unknown
  */
-RemoteObjectTemplate.deleteChangeGroup = function(type, subscriptionId) {
+RemoteObjectTemplate.deleteChangeGroup = function deleteChangeGroup(type, subscriptionId) {
     this._getSubscription(subscriptionId).log[type] = {};
 };
 
@@ -763,7 +763,7 @@ RemoteObjectTemplate.deleteChangeGroup = function(type, subscriptionId) {
  *
  * @returns {unknown} unknown
  */
-RemoteObjectTemplate.getChanges = function(subscriptionId) {
+RemoteObjectTemplate.getChanges = function getChanges(subscriptionId) {
     if (!this._useGettersSetters) {
         this._generateChanges();
     }
@@ -779,7 +779,7 @@ RemoteObjectTemplate.getChanges = function(subscriptionId) {
  *
  * @returns {unknown} unknown
  */
-RemoteObjectTemplate.getChangeStatus = function() {
+RemoteObjectTemplate.getChangeStatus = function getChangeStatus() {
     this._getSession();
 
     var a = 0;
@@ -808,7 +808,7 @@ RemoteObjectTemplate.getChangeStatus = function() {
  *
  * @private
  */
-RemoteObjectTemplate._stashObject = function(obj, template) {
+RemoteObjectTemplate._stashObject = function stashObject(obj, template) {
     var session = this._getSession(obj.__template__.remoteSessionId);
     var isRemote = !!session.dispenseNextId;
     var objectId = session.dispenseNextId || (this.role + '-' + template.__name__ + '-' +  session.nextObjId++);
@@ -829,11 +829,11 @@ RemoteObjectTemplate._stashObject = function(obj, template) {
     return isRemote;
 };
 
-RemoteObjectTemplate._injectIntoObject = function(obj) {
+RemoteObjectTemplate._injectIntoObject = function injectIntoObject(obj) {
     ObjectTemplate._injectIntoObject(obj);
 };
 
-RemoteObjectTemplate._injectIntoTemplate = function(template) {
+RemoteObjectTemplate._injectIntoTemplate = function injectIntoTemplate(template) {
     ObjectTemplate._injectIntoTemplate(template);
 };
 
@@ -850,7 +850,7 @@ RemoteObjectTemplate._injectIntoTemplate = function(template) {
  *
  * @returns {*} - the original function or a wrapper to make a remote call
  */
-RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role, validate) {
+RemoteObjectTemplate._setupFunction = function setupFunction(propertyName, propertyValue, role, validate) {
     /** @type {RemoteObjectTemplate} */
     var objectTemplate = this;
     var self = this;
@@ -861,7 +861,7 @@ RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role
     else {
         // Function wrapper it self will return a promise wrapped to setup the this pointer
         // the function body will queue a remote call to the client/server
-        return function () {
+        return function b() {
             if (validate && this.controller) { //TODO: make this one if statement
                 if (!validate.call(this.controller)) {
                     return Q.reject('validation failure');
@@ -876,16 +876,16 @@ RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role
                 deferred.promise.originalThen = deferred.promise.then;
                 var handledRejection = false;
 
-                deferred.promise.then = function (res, rej, not) {
+                deferred.promise.then = function c(res, rej, not) {
                     if (rej) {
                         handledRejection = true;
                     }
                     return deferred.promise.originalThen(res, rej, not);
                 };
 
-                Q.delay(0).then(function () {
+                Q.delay(0).then(function d() {
                     if (!handledRejection) {
-                        return deferred.promise.then(null, function (error) {
+                        return deferred.promise.then(null, function e(error) {
                             self.controller && self.controller.handleRemoteError(error);
                             return Q(true);
                         });
@@ -908,7 +908,7 @@ RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role
  *
  * @private
  */
-RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, objectProperties, defineProperties) {
+RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defineProperty, objectProperties, defineProperties) {
     //determine whether value needs to be re-initialized in constructor
     var value = null;
 
@@ -962,11 +962,11 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
     if (this._useGettersSetters && this._manageChanges(defineProperty)) {
         var createChanges = this._createChanges(defineProperty);
 
-        defineProperty.set = (function() {
+        defineProperty.set = (function set() {
             // use a closure to record the property name which is not passed to the setter
             var prop = propertyName;
 
-            return function (value) {
+            return function f(value) {
 
                 if (userSetter) {
                     value = userSetter.call(this, value);
@@ -1027,11 +1027,11 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         })();
 
         // Getter
-        defineProperty.get = (function () {
+        defineProperty.get = (function g() {
             // use closure to record property name which is not passed to the getter
             var prop = propertyName;
 
-            return function () {
+            return function z() {
                 if (!defineProperty.isVirtual && this['__' + prop] instanceof Array) {
                     objectTemplate._referencedArray(this, prop, this['__' + prop]);
                 }
@@ -1047,11 +1047,11 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         })();
     }
     else if (defineProperty.userGet || defineProperty.userSet) {
-        defineProperty.set = (function() {
+        defineProperty.set = (function h() {
             // use a closure to record the property name which is not passed to the setter
             var prop = propertyName;
 
-            return function (value) {
+            return function i(value) {
 
                 if (userSetter) {
                     value = userSetter.call(this, value);
@@ -1063,11 +1063,11 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
             };
         })();
 
-        defineProperty.get = (function () {
+        defineProperty.get = (function j() {
             // Use closure to record property name which is not passed to the getter
             var prop = propertyName;
 
-            return function () {
+            return function k() {
 
                 if (userGetter) {
                     if (defineProperty.isVirtual) {
@@ -1105,7 +1105,7 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
  *
  * @param {unknown} cb unknown
  */
-RemoteObjectTemplate.withoutChangeTracking = function (cb) {
+RemoteObjectTemplate.withoutChangeTracking = function withoutChangeTracking(cb) {
     var prevChangeTracking = this.__changeTracking__;
     this.__changeTracking__ = false;
     cb();
@@ -1122,7 +1122,7 @@ RemoteObjectTemplate.withoutChangeTracking = function (cb) {
  *
  * @private
  */
-RemoteObjectTemplate._createChanges = function (defineProperty, template) {
+RemoteObjectTemplate._createChanges = function createChanges(defineProperty, template) {
     template = template || {};
 
     return !((defineProperty.isLocal == true) ||
@@ -1142,7 +1142,7 @@ RemoteObjectTemplate._createChanges = function (defineProperty, template) {
  *
  * @private
  */
-RemoteObjectTemplate._acceptChanges = function (defineProperty, template) {
+RemoteObjectTemplate._acceptChanges = function acceptChanges(defineProperty, template) {
     template = template || {};
     return !((defineProperty.isLocal == true) ||
     (defineProperty.toServer == false && this.role == 'server') ||
@@ -1159,13 +1159,13 @@ RemoteObjectTemplate._acceptChanges = function (defineProperty, template) {
  *
  * @private
  */
-RemoteObjectTemplate._manageChanges = function (defineProperty) {
+RemoteObjectTemplate._manageChanges = function manageChanges(defineProperty) {
     return !(defineProperty.isLocal == true || (defineProperty.toServer == false && defineProperty.toClient == false));
 };
 
 /**************************** Change Management Functions **********************************/
 
-RemoteObjectTemplate._generateChanges = function () {
+RemoteObjectTemplate._generateChanges = function generateChanges() {
     var session = this._getSession();
 
     for (var obj in session.objects) {
@@ -1184,7 +1184,7 @@ RemoteObjectTemplate._generateChanges = function () {
  *
  * @private
  */
-RemoteObjectTemplate._logChanges = function (obj) {
+RemoteObjectTemplate._logChanges = function logChanges(obj) {
     // Go through all the properties and transfer them to newly created object
     var props = obj.__template__.getProperties();
 
@@ -1245,7 +1245,7 @@ RemoteObjectTemplate._logChanges = function (obj) {
  *
  * @private
  */
-RemoteObjectTemplate._changedValue = function (obj, prop, value) {
+RemoteObjectTemplate._changedValue = function changedValue(obj, prop, value) {
     if (obj.__transient__ || this.__transient__ ||
         (this.role == 'client' && obj.__template__.__toServer__ == false) ||
         (this.role == 'server' && obj.__template__.__toClient__ == false)) {
@@ -1294,7 +1294,7 @@ RemoteObjectTemplate._changedValue = function (obj, prop, value) {
  *
  * @private
  */
-RemoteObjectTemplate._referencedArray = function (obj, prop, arrayRef, sessionId) {
+RemoteObjectTemplate._referencedArray = function referencedArray(obj, prop, arrayRef, sessionId) {
     if (obj.__transient__ || this.__transient__ ||
         (this.role == 'client' && obj.__template__.__toServer__ == false) ||
         (this.role == 'server' && obj.__template__.__toClient__ == false)) {
@@ -1343,7 +1343,7 @@ RemoteObjectTemplate._referencedArray = function (obj, prop, arrayRef, sessionId
  *
  * @private
  */
-RemoteObjectTemplate._convertArrayReferencesToChanges = function() {
+RemoteObjectTemplate._convertArrayReferencesToChanges = function convertArrayReferencesToChanges() {
     var session = this._getSession();
     var subscriptions = this._getSubscriptions();
 
@@ -1441,7 +1441,7 @@ RemoteObjectTemplate._convertArrayReferencesToChanges = function() {
  * Determine whether each array reference was an actual change or just a reference
  * If an actual change set __changed__
  */
-RemoteObjectTemplate.MarkChangedArrayReferences = function() {
+RemoteObjectTemplate.MarkChangedArrayReferences = function MarkChangedArrayReferences() {
     var session = this._getSession();
     var subscriptions = this._getSubscriptions();
 
@@ -1515,7 +1515,7 @@ RemoteObjectTemplate.MarkChangedArrayReferences = function() {
  *
  * @private
  */
-RemoteObjectTemplate._convertValue = function (value) {
+RemoteObjectTemplate._convertValue = function convertValue(value) {
     if (value instanceof Array) {
         var newValue = [];
 
@@ -1562,7 +1562,7 @@ RemoteObjectTemplate._convertValue = function (value) {
  *
  * @returns {unknown}
  */
-RemoteObjectTemplate.getObject = function(objId, template) {
+RemoteObjectTemplate.getObject = function getObject(objId, template) {
     var session = this._getSession();
     var obj = session.objects[objId];
 
@@ -1585,7 +1585,7 @@ RemoteObjectTemplate.getObject = function(objId, template) {
  *                    2 - objects processed
  * @private
  */
-RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
+RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subscriptionId) {
     var session = this._getSession();
     var rollback = [];
 
@@ -1669,7 +1669,7 @@ RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
  *
  * @private
  */
-RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, force) {
+RemoteObjectTemplate._applyObjectChanges = function applyObjectChanges(changes, rollback, obj, force) {
     // Go through each recorded change which is a pair of old and new values
     for (var prop in changes[obj.__id__]) {
         var change = changes[obj.__id__][prop];
@@ -1784,7 +1784,7 @@ RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, forc
  *
  * @private
  */
-RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, prop, ix, oldValue, newValue, force) {
+RemoteObjectTemplate._applyPropertyChange = function applyPropertyChange(changes, rollback, obj, prop, ix, oldValue, newValue, force) {
     var session = this._getSession();
 
     // Get old, new and current value to determine if change is still applicable
@@ -1977,7 +1977,7 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
  *
  * @private
  */
-RemoteObjectTemplate._rollback = function(rollback) {
+RemoteObjectTemplate._rollback = function rollback(rollback) {
     for (var ix = 0; ix < rollback.length; ++ix) {
         if (rollback[ix][2] >= 0) {
             ((rollback[ix][0])[rollback[ix][1]])[rollback[ix][2]] = rollback[ix][3];
@@ -1993,7 +1993,7 @@ RemoteObjectTemplate._rollback = function(rollback) {
  *
  * @private
  */
-RemoteObjectTemplate._rollbackChanges = function() {
+RemoteObjectTemplate._rollbackChanges = function rollbackChanges() {
     var session = this._getSession();
     var changes = this.getChanges();
 
@@ -2035,7 +2035,7 @@ RemoteObjectTemplate._rollbackChanges = function() {
  *
  * @private
  */
-RemoteObjectTemplate._createEmptyObject = function(template, objId, defineProperty, isTransient) {
+RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, objId, defineProperty, isTransient) {
 
     if (!objId) {
         throw new Error('_createEmptyObject called for ' + template.__name__ + ' without objId parameter');
@@ -2094,7 +2094,7 @@ RemoteObjectTemplate._createEmptyObject = function(template, objId, defineProper
  * @param {unknown} template unknown
  * @param {unknown} injector unknown
  */
-RemoteObjectTemplate.inject = function (template, injector) {
+RemoteObjectTemplate.inject = function inject(template, injector) {
     template.__injections__.push(injector);
     // Go through existing objects to inject them as well
     var session = this._getSession();
@@ -2118,7 +2118,7 @@ RemoteObjectTemplate.inject = function (template, injector) {
  *
  * @private
  */
-RemoteObjectTemplate._queueRemoteCall = function(objId, functionName, deferred, args) {
+RemoteObjectTemplate._queueRemoteCall = function queueRemoteCall(objId, functionName, deferred, args) {
     var session = this._getSession();
     args = Array.prototype.slice.call(args); // JS arguments array not an array after all
 
@@ -2138,7 +2138,7 @@ RemoteObjectTemplate._queueRemoteCall = function(objId, functionName, deferred, 
  *
  * @private
  */
-RemoteObjectTemplate._processQueue = function() {
+RemoteObjectTemplate._processQueue = function processQueue() {
     var session = this._getSession();
 
     if (session.sendMessage && session.sendMessageEnabled) {
@@ -2275,7 +2275,7 @@ RemoteObjectTemplate._fromTransport = function clone(obj) {
  *
  * @private
  */
-RemoteObjectTemplate._trimArray = function(array) {
+RemoteObjectTemplate._trimArray = function trimArray(array) {
     while (array.length > 0 && (typeof(array[array.length - 1]) == 'undefined' || array[array.length - 1] == null)) {
         array.splice(array.length - 1, 1);
     }
@@ -2288,7 +2288,7 @@ RemoteObjectTemplate._trimArray = function(array) {
  *
  * @private
  */
-RemoteObjectTemplate._getSession = function() {
+RemoteObjectTemplate._getSession = function getSession() {
     if (!this.currentSession) {
         this.logger.error({component: 'semotus', module: 'getSession', activity: 'processing'}, 'RemoteObjectTemplate: Please create a session first');
         throw new Error('RemoteObjectTemplate: Please create a session first');
@@ -2304,7 +2304,7 @@ RemoteObjectTemplate._getSession = function() {
  *
  * @private
  */
-RemoteObjectTemplate._deleteChangeGroups = function(type) {
+RemoteObjectTemplate._deleteChangeGroups = function deleteChangeGroups(type) {
     for (var subscription in this._getSubscriptions()) {
         this.deleteChangeGroup(type, subscription);
     }
@@ -2319,7 +2319,7 @@ RemoteObjectTemplate._deleteChangeGroups = function(type) {
  *
  * @private
  */
-RemoteObjectTemplate._getSubscriptions = function(sessionId) {
+RemoteObjectTemplate._getSubscriptions = function getSubscriptions(sessionId) {
     return this._getSession(sessionId).subscriptions;
 };
 
@@ -2328,7 +2328,7 @@ RemoteObjectTemplate._getSubscriptions = function(sessionId) {
  *
  * @private
  */
-RemoteObjectTemplate._deleteChanges = function() {
+RemoteObjectTemplate._deleteChanges = function deleteChanges() {
     this._deleteChangeGroups('array');
     this._deleteChangeGroups('change');
 };
@@ -2342,7 +2342,7 @@ RemoteObjectTemplate._deleteChanges = function() {
  *
  * @private
  */
-RemoteObjectTemplate._getSubscription = function(subscriptionId) {
+RemoteObjectTemplate._getSubscription = function getSubscription(subscriptionId) {
     return this._getSession().subscriptions[subscriptionId || 0];
 };
 
@@ -2355,7 +2355,7 @@ RemoteObjectTemplate._getSubscription = function(subscriptionId) {
  *
  * @returns {unknown} unknown
  */
-RemoteObjectTemplate.cleanPrivateValues = function(prop, logValue, defineProperty) {
+RemoteObjectTemplate.cleanPrivateValues = function cleanPrivateValues(prop, logValue, defineProperty) {
 
     if (prop.match(/password|ssn|socialsecurity|pin/i) && defineProperty.logChanges != 'false') {
         return '***';
