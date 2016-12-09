@@ -47,6 +47,12 @@ RemoteObjectTemplate.__conflictMode__ = 'hard';
 RemoteObjectTemplate.logLevel = 0;
 RemoteObjectTemplate.maxClientSequence = 1;
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} level unknown
+ * @param {unknown} data unknown
+ */
 RemoteObjectTemplate.log = function (level, data) {
     // OBSOLETE
     if (level > this.logLevel) {
@@ -71,7 +77,11 @@ RemoteObjectTemplate.log = function (level, data) {
 /**
  * Obtain a session for tracking subscriptions
  *
- * @return {*}
+ * @param {unknown} role unknown
+ * @param {unknown} sendMessage unknown
+ * @param {unknown} sessionId unknown
+ *
+ * @returns {*} unknown
  */
 RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
 
@@ -117,6 +127,11 @@ RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
     return sessionId;
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} sessionId unknown
+ */
 RemoteObjectTemplate.deleteSession = function(sessionId) {
     var session = this._getSession(sessionId);
     
@@ -129,6 +144,11 @@ RemoteObjectTemplate.deleteSession = function(sessionId) {
     }
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} nextObjId unknown
+ */
 RemoteObjectTemplate.setMinimumSequence = function(nextObjId) {
     this._getSession().nextObjId = Math.max(nextObjId, this._getSession().nextObjId);
 };
@@ -136,8 +156,9 @@ RemoteObjectTemplate.setMinimumSequence = function(nextObjId) {
 /**
  * Save the session data in a way that can be serialized/de-serialized
  *
- * @param sessionId
- * @return {Object}
+ * @param {unknown} sessionId unknown
+ *
+ * @returns {Object} unknown
  */
 RemoteObjectTemplate.saveSession = function(sessionId) {
     var session = this._getSession(sessionId);
@@ -160,6 +181,13 @@ RemoteObjectTemplate.saveSession = function(sessionId) {
     return str;
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} sessionId unknown
+ *
+ * @returns {unknown} unknown
+ */
 RemoteObjectTemplate.getPendingCallCount = function(sessionId) {
     var session = this._getSession(sessionId);
     
@@ -171,10 +199,11 @@ RemoteObjectTemplate.getPendingCallCount = function(sessionId) {
  *
  * A revision number is used to determine whether the in-memory copy is good
  *
- * @param sessionId - the id under which it was created with createSession
- * @param savedSession - the POJO version of the sesion data
- * @param sendMessage - new message function to be in effect
- * @return {Boolean} false means that messages were in flight and a reset is needed
+ * @param {unknown} sessionId - the id under which it was created with createSession
+ * @param {unknown} savedSession - the POJO version of the sesion data
+ * @param {unknown} sendMessage - new message function to be in effect
+ *
+ * @returns {Boolean} false means that messages were in flight and a reset is needed
  */
 RemoteObjectTemplate.restoreSession = function(sessionId, savedSession, sendMessage) {
     this.setSession(sessionId);
@@ -200,7 +229,7 @@ RemoteObjectTemplate.restoreSession = function(sessionId, savedSession, sendMess
  * Indicate that all changes have been accepted outside of the message
  * mechanism as would usually happen when a session is starting up
  *
- * @param sessionId
+ * @param {unknown} sessionId unknown
  */
 RemoteObjectTemplate.syncSession = function(sessionId) {
     this._getSession(sessionId);
@@ -212,7 +241,7 @@ RemoteObjectTemplate.syncSession = function(sessionId) {
  * Set the current session to a session id returned from createSession()
  * Relies on a single threaded model such as node.js
  *
- * @param sessionId
+ * @param {unknown} sessionId unknown
  */
 RemoteObjectTemplate.setSession = function(sessionId) {
     this.currentSession = sessionId;
@@ -221,9 +250,9 @@ RemoteObjectTemplate.setSession = function(sessionId) {
 /**
  * Enable/Disable sending of messages and optionally provide a new callback
  *
- * @param value boolean to enable/disable
- * @param messageCallback optional call back function
- * @param sessionId optional session id
+ * @param {unknown} value boolean to enable/disable
+ * @param {unknown} messageCallback optional call back function
+ * @param {unknown} sessionId optional session id
  */
 RemoteObjectTemplate.enableSendMessage = function (value, messageCallback, sessionId) {
     var session = this._getSession(sessionId);
@@ -239,9 +268,10 @@ RemoteObjectTemplate.enableSendMessage = function (value, messageCallback, sessi
  * sole recipient of remote call messages.  Change tracking is then managed
  * by the functions that follow.
  *
- * @param role
- * @param sendMessage and optional call back for sending messages
- * @return {*}
+ * @param {unknown} role unknown
+ * @param {unknown} sendMessage and optional call back for sending messages
+ *
+ * @returns {*} unknown
  */
 RemoteObjectTemplate.subscribe = function (role) {
     var subscriptionId = this._getSession().nextSubscriptionId++;
@@ -260,7 +290,11 @@ RemoteObjectTemplate.subscribe = function (role) {
 /**
  * Process a remote call message that was created and passed to the sendMessage callback
  *
- * @param remoteCall - key/value set containing the remote call details and pending sync chnages
+ * @param {unknown} remoteCall - key/value set containing the remote call details and pending sync chnages
+ * @param {unknown} subscriptionId - unknown
+ * @param {unknown} restoreSessionCallback - unknown
+ *
+ * @returns {unknown} unknown
  */
 RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, restoreSessionCallback) {
     if (!remoteCall) {
@@ -376,6 +410,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
      * changes in the messages and give the object owning the method a chance to validate that the
      * call is valid and take care of any authorization concerns.  Finally we let the controller perform
      * any post-call processing such as commiting data and then we deal with a failure or success.
+     *
+     * @param {unknown} forceupdate unknown
+     *
+     * @returns {unknown} unknown
      */
     function processCall (forceupdate) {
         return Q(forceupdate)
@@ -389,7 +427,8 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * If there is an update conflict we want to retry after restoring the session
-     * @returns {*}
+     *
+     * @returns {*} unknown
      */
     function retryCall () {
         if (restoreSessionCallback) {
@@ -401,6 +440,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * Determine what objects changed and pass this to the preServerCall method on the controller
+     *
+     * @param {unknown} forceupdate unknown
+     *
+     * @returns {unknown} unknown
      */
     function preCallHook (forceupdate) {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'preServerCall',
@@ -422,6 +465,8 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * Apply changes in the message and then validate the call.  Throw "Sync Error" if changes can't be applied
+     *
+     * @returns {unknown} unknown
      */
     function applyChangesAndValidateCall () {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'call',
@@ -448,7 +493,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * If the changes could be applied and the validation was successful call the method
-     * @param isValid
+     *
+     * @param {unknown} isValid unknown
+     *
+     * @returns {unknown} unknown
      */
     function callIfValid(isValid) {
         if (!isValid) {
@@ -463,6 +511,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * Let the controller know that the method was completed and give it a chance to commit changes
+     *
+     * @param {unknown} returnValue unknown
+     *
+     * @returns {unknown} unknown
      */
     function postCallHook (returnValue) {
         if (this.controller && this.controller['postServerCall']) {
@@ -479,7 +531,8 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     /**
      * Package up any changes resulting from the execution and send them back in the message, clearing
      * our change queue to accumulate more changes for the next call
-     * @param ret
+     *
+     * @param {unknown} ret unknown
      */
     function postCallSuccess(ret) {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'postCall.success',
@@ -491,7 +544,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * Handle errors by returning an apropriate message.  In all cases changes sent back though they
-     * @param err
+     *
+     * @param {unknown} err unknown
+     *
+     * @returns {unknown} unknown
      */
     function postCallFailure(err) {
         if (err == 'Sync Error') {
@@ -540,8 +596,10 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     /**
      * Distinquish between an actual error (will throw an Error object) and a string that the application may
      * throw which is to get piped back to the caller.  For an actual error we want to log the stack trace
-     * @param err
-     * @returns {*}
+     *
+     * @param {unknown} err unknown
+     *
+     * @returns {*} unknown
      */
     function getError(err) {
         if (err instanceof Error) {
@@ -559,7 +617,8 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     
     /**
      * Deal with changes going back to the caller
-     * @param message
+     *
+     * @param {unknown} message unknown
      */
     function packageChanges(message) {
         this._convertArrayReferencesToChanges();
@@ -578,7 +637,8 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
 /**
  * Create a serialized session for amorphic recreating the session object
  * map along the way to release references to objects no longer in
- * @returns {*}
+ *
+ * @returns {*} unknown
  */
 RemoteObjectTemplate.serializeAndGarbageCollect = function () {
     var session = this._getSession();
@@ -625,7 +685,10 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function () {
 /**
  * Pick up next message (alternate interface to using a callback)
  *
- * @return {*} the message or null
+ * @param {unknown} sessionId unknown
+ * @param {unknown} forceMessage unknown
+ *
+ * @returns {*} the message or null
  */
 RemoteObjectTemplate.getMessage = function(sessionId, forceMessage) {
     var session = this._getSession(sessionId);
@@ -647,7 +710,8 @@ RemoteObjectTemplate.getMessage = function(sessionId, forceMessage) {
 
 /**
  * Clear any pending calls (needed when you expire a session)
- * @param sessionId
+ *
+ * @param {unknown} sessionId unknown
  */
 RemoteObjectTemplate.clearPendingCalls = function (sessionId) {
     var session = this._getSession(sessionId);
@@ -657,7 +721,10 @@ RemoteObjectTemplate.clearPendingCalls = function (sessionId) {
 /**
  * Pick up all messages
  *
- * @return {[]} the messages in an array
+ * @param {unknown} type unknown
+ * @param {unknown} subscriptionId unknown
+ *
+ * @returns {[]} the messages in an array
  *
  RemoteObjectTemplate.getMessages = function(sessionId) {
     var session = this._getSession(sessionId);
@@ -676,10 +743,23 @@ RemoteObjectTemplate.getChangeGroup = function(type, subscriptionId) {
     return this._getSubscription(subscriptionId).log[type];
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} type unknown
+ * @param {unknown} subscriptionId unknown
+ */
 RemoteObjectTemplate.deleteChangeGroup = function(type, subscriptionId) {
     this._getSubscription(subscriptionId).log[type] = {};
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} subscriptionId unknown
+ *
+ * @returns {unknown} unknown
+ */
 RemoteObjectTemplate.getChanges = function(subscriptionId) {
     if (!this._useGettersSetters) {
         this._generateChanges();
@@ -691,6 +771,11 @@ RemoteObjectTemplate.getChanges = function(subscriptionId) {
     return changes;
 };
 
+/**
+ * Purpose unknown
+ *
+ * @returns {unknown} unknown
+ */
 RemoteObjectTemplate.getChangeStatus = function() {
     this._getSession();
     
@@ -711,10 +796,13 @@ RemoteObjectTemplate.getChangeStatus = function() {
 };
 
 /**
- *
  * Give an object a unique id and stash an object into the global object store
  *
- * @param obj
+ * @param {unknown} obj unknown
+ * @param {unknown} template unknown
+ *
+ * @returns {unknown} unknown
+ *
  * @private
  */
 RemoteObjectTemplate._stashObject = function(obj, template) {
@@ -752,9 +840,12 @@ RemoteObjectTemplate._injectIntoTemplate = function(template) {
  * if this is a remote function, meaning that the role established when defining
  * the template is different than the role for RemoteObjectTemplate as a whole.
  *
- * @param propertyName - the name of the function
- * @param propertyValue - the function to be wrapped
- * @return {*} - the original function or a wrapper to make a remote call
+ * @param {unknown} propertyName - the name of the function
+ * @param {unknown} propertyValue - the function to be wrapped
+ * @param {unknown} role unknown
+ * @param {unknown} validate unknown
+ *
+ * @returns {*} - the original function or a wrapper to make a remote call
  */
 RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role, validate) {
     /** @type {RemoteObjectTemplate} */
@@ -807,10 +898,11 @@ RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role
  * Overridden method in ObjectTemplate that creates a structure initialize a property in constructor
  * and adds any getters and setters to the property so changes can be tracked
  *
- * @param propertyName - the name of the property
- * @param defineProperty - the property definition as passed to ObjectTemplate
- * @param objectProperties - the property definitions that will be hand processed
- * @param defineProperties - the property definitions to be processed by Object.defineProperty
+ * @param {unknown} propertyName - the name of the property
+ * @param {unknown} defineProperty - the property definition as passed to ObjectTemplate
+ * @param {unknown} objectProperties - the property definitions that will be hand processed
+ * @param {unknown} defineProperties - the property definitions to be processed by Object.defineProperty
+ *
  * @private
  */
 RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, objectProperties, defineProperties) {
@@ -1003,7 +1095,8 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
 
 /**
  * Disable change tracking for duration of synchronous processing callback
- * @param cb
+ *
+ * @param {unknown} cb unknown
  */
 RemoteObjectTemplate.withoutChangeTracking = function (cb) {
     var prevChangeTracking = this.__changeTracking__;
@@ -1014,8 +1107,12 @@ RemoteObjectTemplate.withoutChangeTracking = function (cb) {
 
 /**
  * Determine whether changes need to be created for a property
- * @param defineProperty
- * @return {Boolean}
+ *
+ * @param {unknown} defineProperty unknown
+ * @param {unknown} template unknown
+ *
+ * @returns {Boolean} unknown
+ *
  * @private
  */
 RemoteObjectTemplate._createChanges = function (defineProperty, template) {
@@ -1030,8 +1127,12 @@ RemoteObjectTemplate._createChanges = function (defineProperty, template) {
 
 /**
  * Determine whether changes should be accepted for a property
- * @param defineProperty
- * @return {Boolean}
+ *
+ * @param {unknown} defineProperty unknown
+ * @param {unknown} template unknown
+ *
+ * @returns {Boolean} unknown
+ *
  * @private
  */
 RemoteObjectTemplate._acceptChanges = function (defineProperty, template) {
@@ -1045,8 +1146,10 @@ RemoteObjectTemplate._acceptChanges = function (defineProperty, template) {
 
 /**
  * Determine whether any tracking of old values is needed
- * @param defineProperty
- * @return {Boolean}
+ * @param {unknown} defineProperty unknown
+ *
+ * @returns {Boolean} unknown
+ *
  * @private
  */
 RemoteObjectTemplate._manageChanges = function (defineProperty) {
@@ -1070,7 +1173,8 @@ RemoteObjectTemplate._generateChanges = function () {
  * generate changes but still track the old value so that changes
  * can be applied from the other party
  *
- * @param obj - object to be processed
+ * @param {unknown} obj - object to be processed
+ *
  * @private
  */
 RemoteObjectTemplate._logChanges = function (obj) {
@@ -1128,9 +1232,10 @@ RemoteObjectTemplate._logChanges = function (obj) {
  * Note that objects created with RemoteObjectTemplate have and id and that
  * only the id is stored
  *
- * @param obj the object instance
- * @param prop the object property
- * @param value the new value
+ * @param {unknown} obj the object instance
+ * @param {unknown} prop the object property
+ * @param {unknown} value the new value
+ *
  * @private
  */
 RemoteObjectTemplate._changedValue = function (obj, prop, value) {
@@ -1175,9 +1280,11 @@ RemoteObjectTemplate._changedValue = function (obj, prop, value) {
  * is the current value of the array.  Only the value at the first
  * reference is recorded.
  *
- * @param obj the object instance
- * @param prop the property of the object (should be an array)
- * @param arrayRef the value returned in the reference (previous value)
+ * @param {unknown} obj the object instance
+ * @param {unknown} prop the property of the object (should be an array)
+ * @param {unknown} arrayRef the value returned in the reference (previous value)
+ * @param {unknown} sessionId the value returned in the reference (previous value)
+ *
  * @private
  */
 RemoteObjectTemplate._referencedArray = function (obj, prop, arrayRef, sessionId) {
@@ -1326,7 +1433,6 @@ RemoteObjectTemplate._convertArrayReferencesToChanges = function() {
 /**
  * Determine whether each array reference was an actual change or just a reference
  * If an actual change set __changed__
- * @private
  */
 RemoteObjectTemplate.MarkChangedArrayReferences = function() {
     var session = this._getSession();
@@ -1396,8 +1502,10 @@ RemoteObjectTemplate.MarkChangedArrayReferences = function() {
  * Convert property value to suitabile change format which is always a string
  * ObjectTemplate objects always represented by their id
  *
- * @param value {Object}
- * @return {String} or Array of Strings
+ * @param {Object} value unknown
+ *
+ * @returns {String} or Array of Strings
+ *
  * @private
  */
 RemoteObjectTemplate._convertValue = function (value) {
@@ -1439,6 +1547,14 @@ RemoteObjectTemplate._convertValue = function (value) {
     }
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} objId unknown
+ * @param {unknown} template unknown
+ *
+ * @returns {unknown}
+ */
 RemoteObjectTemplate.getObject = function(objId, template) {
     var session = this._getSession();
     var obj = session.objects[objId];
@@ -1453,12 +1569,13 @@ RemoteObjectTemplate.getObject = function(objId, template) {
 /**
  * Apply changes across all objects
  *
- * @param changes a property for each object changed with the details of the change
- * @param force if true changes will be accepted without rolling back
- * @param subscriptionId optional subscription id for changes
- * @return Number   0 - whether a rollback had to be done
- *                  1 - no objects processed
- *                  2 - objects processed
+ * @param {unknown} changes a property for each object changed with the details of the change
+ * @param {unknown} force if true changes will be accepted without rolling back
+ * @param {unknown} subscriptionId optional subscription id for changes
+ *
+ * @returns {Number}   0 - whether a rollback had to be done
+ *                    1 - no objects processed
+ *                    2 - objects processed
  * @private
  */
 RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
@@ -1533,11 +1650,13 @@ RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
 /**
  * Apply changes for a specific object
  *
- * @param changes all changes
- * @param rollback an array of changes that would have to be rolled back
- * @param obj the object instance that was changed
- * @param force whether changes can be rolled back
- * @return {Boolean} whether a rollback needs to be done
+ * @param {unknown} changes all changes
+ * @param {unknown} rollback an array of changes that would have to be rolled back
+ * @param {unknown} obj the object instance that was changed
+ * @param {unknown} force whether changes can be rolled back
+ *
+ * @returns {Boolean} whether a rollback needs to be done
+ *
  * @private
  */
 RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, force) {
@@ -1642,15 +1761,17 @@ RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, forc
  * Apply changes for a specific property, cascading changes in the event
  * that a reference to an object that needs to be created is part of the change
  *
- * @param changes all changes
- * @param rollback an array of changes that would have to be rolled back
- * @param obj the object instance that was changed
- * @param prop the property of that object
- * @param ix the position of the property if the property is an array
- * @param oldValue the old value before the change occured
- * @param newValue the value after the change occured
- * @param force whether changes can be rolled back
- * @return {Boolean} whether a rollback needs to be done
+ * @param {unknown} changes all changes
+ * @param {unknown} rollback an array of changes that would have to be rolled back
+ * @param {unknown} obj the object instance that was changed
+ * @param {unknown} prop the property of that object
+ * @param {unknown} ix the position of the property if the property is an array
+ * @param {unknown} oldValue the old value before the change occured
+ * @param {unknown} newValue the value after the change occured
+ * @param {unknown} force whether changes can be rolled back
+ *
+ * @returns {Boolean} whether a rollback needs to be done
+ *
  * @private
  */
 RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, prop, ix, oldValue, newValue, force) {
@@ -1835,13 +1956,15 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
     }
 
     rollback.push([obj, prop, ix, currentValue]);
+    
     return true;
 };
 
 /**
  * Roll back changes accumulated as part of the application of changes
  *
- * @param rollback - array of changes
+ * @param {unknown} rollback - array of changes
+ *
  * @private
  */
 RemoteObjectTemplate._rollback = function(rollback) {
@@ -1857,6 +1980,7 @@ RemoteObjectTemplate._rollback = function(rollback) {
 
 /**
  * Roll back all changes
+ *
  * @private
  */
 RemoteObjectTemplate._rollbackChanges = function() {
@@ -1892,11 +2016,13 @@ RemoteObjectTemplate._rollbackChanges = function() {
  * already in the object store. If the object already exists in the object
  * store return a reference to it
  *
- * @param template - the ObjectTemplate template for the object
- * @param objId - the id to be assigned
- * @param defineProperty - the property definition from the template
- * @param isTransient - true if not to be recorded in session
- * @return {*} - an instance of the object
+ * @param {unknown} template - the ObjectTemplate template for the object
+ * @param {unknown} objId - the id to be assigned
+ * @param {unknown} defineProperty - the property definition from the template
+ * @param {unknown} isTransient - true if not to be recorded in session
+ *
+ * @returns {*} - an instance of the object
+ *
  * @private
  */
 RemoteObjectTemplate._createEmptyObject = function(template, objId, defineProperty, isTransient) {
@@ -1955,7 +2081,8 @@ RemoteObjectTemplate._createEmptyObject = function(template, objId, defineProper
 /**
  * Add a function that will fire on object creation
  *
- * @param injector
+ * @param {unknown} template unknown
+ * @param {unknown} injector unknown
  */
 RemoteObjectTemplate.inject = function (template, injector) {
     template.__injections__.push(injector);
@@ -1974,10 +2101,11 @@ RemoteObjectTemplate.inject = function (template, injector) {
 /**
  * Add a remote call to the queue for sequential transmission
  *
- * @param objId - The id of the object owning the method
- * @param functionName - the method
- * @param deferred - A Q deferred object containing a promise
- * @param args - arguments to the method call
+ * @param {unknown} objId - The id of the object owning the method
+ * @param {unknown} functionName - the method
+ * @param {unknown} deferred - A Q deferred object containing a promise
+ * @param {unknown} args - arguments to the method call
+ *
  * @private
  */
 RemoteObjectTemplate._queueRemoteCall = function(objId, functionName, deferred, args) {
@@ -2017,8 +2145,10 @@ RemoteObjectTemplate._processQueue = function() {
  * type information and replaces object references with Ids.  This can only
  * be converted back once any objects are synchronized via applyChanges()
  *
- * @param obj - the root object
- * @return {Object} - an enriched root object
+ * @param {unknown} obj - the root object
+ *
+ * @returns {Object} - an enriched root object
+ *
  * @private
  */
 RemoteObjectTemplate._toTransport = function clone(obj) {
@@ -2067,8 +2197,10 @@ RemoteObjectTemplate._toTransport = function clone(obj) {
  * object references to the real objects based on their id's
  * Important: Under no circumstances will this instantiate other than a primitive object
  *
- * @param obj - an object produced with toTransport()
- * @return {*} - the original object
+ * @param {unknown} obj - an object produced with toTransport()
+ *
+ * @returns {*} - the original object
+ *
  * @private
  */
 RemoteObjectTemplate._fromTransport = function clone(obj) {
@@ -2127,7 +2259,8 @@ RemoteObjectTemplate._fromTransport = function clone(obj) {
 /**
  * Remove extra positions at the end of the array to keep length correct
  *
- * @param array
+ * @param {unknown} array unknown
+ *
  * @private
  */
 RemoteObjectTemplate._trimArray = function(array) {
@@ -2138,7 +2271,9 @@ RemoteObjectTemplate._trimArray = function(array) {
 
 /**
  * Get the current session structure
- * @return {*} the session
+ *
+ * @returns {*} the session
+ *
  * @private
  */
 RemoteObjectTemplate._getSession = function() {
@@ -2150,25 +2285,64 @@ RemoteObjectTemplate._getSession = function() {
     return this.sessions[this.currentSession];
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} type unknown
+ *
+ * @private
+ */
 RemoteObjectTemplate._deleteChangeGroups = function(type) {
     for (var subscription in this._getSubscriptions()) {
         this.deleteChangeGroup(type, subscription);
     }
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} sessionId unknown
+ *
+ * @returns {unknown} unknown
+ *
+ * @private
+ */
 RemoteObjectTemplate._getSubscriptions = function(sessionId) {
     return this._getSession(sessionId).subscriptions;
 };
 
+/**
+ * Purpose unknown
+ *
+ * @private
+ */
 RemoteObjectTemplate._deleteChanges = function() {
     this._deleteChangeGroups('array');
     this._deleteChangeGroups('change');
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} subscriptionId unknown
+ *
+ * @returns {unknown} unknown
+ *
+ * @private
+ */
 RemoteObjectTemplate._getSubscription = function(subscriptionId) {
     return this._getSession().subscriptions[subscriptionId || 0];
 };
 
+/**
+ * Purpose unknown
+ *
+ * @param {unknown} prop unknown
+ * @param {unknown} logValue unknown
+ * @param {unknown} defineProperty unknown
+ *
+ * @returns {unknown} unknown
+ */
 RemoteObjectTemplate.cleanPrivateValues = function(prop, logValue, defineProperty) {
     
     if (prop.match(/password|ssn|socialsecurity|pin/i) && defineProperty.logChanges != 'false') {
