@@ -24,7 +24,7 @@
  */
 if (typeof(require) != 'undefined') {
     var Q = require('q');
-    _ = require('underscore');
+    var _ = require('underscore');
     /** type {ObjectTemplate} */
     var ObjectTemplate = require('supertype');
 }
@@ -328,218 +328,6 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
         
         return processCall.call(this);
 
-        function logTime() {
-            return ((new Date()).getTime() - callContext.startTime.getTime());
-        }
-
-        /**
-         * We process the call the remote method in stages starting by letting the controller examine the
-         * changes (preCallHook) and giving it a chance to refresh data if it needs to.  Then we apply any
-         * changes in the messages and give the object owning the method a chance to validate that the
-         * call is valid and take care of any authorization concerns.  Finally we let the controller perform
-         * any post-call processing such as commiting data and then we deal with a failure or success.
-         */
-        function processCall (forceupdate) {
-            return Q(forceupdate)
-                .then(preCallHook.bind(this))
-                .then(applyChangesAndValidateCall.bind(this))
-                .then(callIfValid.bind(this))
-                .then(postCallHook.bind(this))
-                .then(postCallSuccess.bind(this))
-                .fail(postCallFailure.bind(this));
-        }
-
-        /**
-         * If there is an update conflict we want to retry after restoring the session
-         * @returns {*}
-         */
-        function retryCall () {
-            if (restoreSessionCallback) {
-                restoreSessionCallback();
-            }
-            
-            return processCall.call(this, true);
-        }
-        
-        /**
-         * Determine what objects changed and pass this to the preServerCall method on the controller
-         */
-        function preCallHook (forceupdate) {
-            this.logger.info({component: 'semotus', module: 'processMessage', activity: 'preServerCall',
-                data:{call: remoteCall.name, sequence: remoteCall.sequence}}, remoteCall.name);
-            
-            if (this.controller && this.controller['preServerCall']) {
-                var changes = {};
-                
-                for (var objId in JSON.parse(remoteCall.changes)) {
-                    changes[this.__dictionary__[objId.replace(/[^-]*-/, '').replace(/-.*/, '')].__name__] = true;
-                }
-                
-                return this.controller['preServerCall'].call(this.controller, remoteCall.changes.length > 2, changes, callContext, forceupdate);
-            }
-            else {
-                return true;
-            }
-        }
-
-        /**
-         * Apply changes in the message and then validate the call.  Throw "Sync Error" if changes can't be applied
-         */
-        function applyChangesAndValidateCall () {
-            this.logger.info({component: 'semotus', module: 'processMessage', activity: 'call',
-                data:{call: remoteCall.name, sequence: remoteCall.sequence, remoteCallId: remoteCall.id}}, remoteCall.name);
-            
-            var arguments = this._fromTransport(JSON.parse(remoteCall.arguments));
-            
-            if (this._applyChanges(JSON.parse(remoteCall.changes), this.role == 'client', subscriptionId)) {
-                var obj = session.objects[remoteCall.id];
-                
-                if (!obj) {
-                    throw new Error('Cannot find object for remote call ' + remoteCall.id);
-                }
-                
-                if (this.role == 'server' && obj['validateServerCall']) {
-                    return obj['validateServerCall'].call(obj, remoteCall.name, callContext);
-                }
-                else {
-                    return true;
-                }
-            }
-            else {
-                throw 'Sync Error';
-            }
-        }
-
-        /**
-         * If the changes could be applied and the validation was successful call the method
-         * @param isValid
-         */
-        function callIfValid(isValid) {
-            if (!isValid) {
-                throw new Error(remoteCall.name + ' refused');
-            }
-            
-            var obj = session.objects[remoteCall.id];
-            var arguments = this._fromTransport(JSON.parse(remoteCall.arguments));
-            
-            return obj[remoteCall.name].apply(obj, arguments);
-        }
-
-        /**
-         * Let the controller know that the method was completed and give it a chance to commit changes
-         */
-        function postCallHook (returnValue) {
-            if (this.controller && this.controller['postServerCall']) {
-                return Q(this.controller['postServerCall'].call(this.controller, remoteCall.changes.length > 2, callContext))
-                    .then(function () {
-                        return returnValue;
-                    });
-            }
-            else {
-                return returnValue;
-            }
-        }
-
-        /**
-         * Package up any changes resulting from the execution and send them back in the message, clearing
-         * our change queue to accumulate more changes for the next call
-         * @param ret
-         */
-        function postCallSuccess(ret) {
-            this.logger.info({component: 'semotus', module: 'processMessage', activity: 'postCall.success',
-                data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
-            
-            packageChanges.call(this, {type: 'response', sync: true, value: JSON.stringify(this._toTransport(ret)),
-                name: remoteCall.name,  remoteCallId: remoteCallId});
-        }
-
-        /**
-         * Handle errors by returning an apropriate message.  In all cases changes sent back though they
-         * @param err
-         */
-        function postCallFailure(err) {
-            if (err == 'Sync Error') {
-                this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.syncError',
-                    data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
-                
-                packageChanges.call(this, {type: 'response', sync: false, changes: '', remoteCallId: remoteCallId});
-            }
-            else if (err.message == 'Update Conflict') { // Not this may be caught in the trasport (e.g. Amorphic) and retried)
-                if (callContext.retries++ < 3) {
-                    this.logger.warn({component: 'semotus', module: 'processMessage', activity: 'postCall.updateConflict',
-                        data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
-                    
-                    return Q.delay(callContext.retries * 1000).then(retryCall.bind(this));
-                }
-                else {
-                    this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.updateConflict',
-                        data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
-                    
-                    packageChanges.call(this, {type: 'retry', sync: false, remoteCallId: remoteCallId});
-                }
-            }
-            else {
-                if (!(err instanceof Error)) {
-                    this.logger.info({component: 'semotus', module: 'processMessage', activity: 'postCall.error',
-                        data: {message: JSON.stringify(err), call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
-                }
-                else {
-                    if (err.stack) {
-                        this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
-                                data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
-                            'Exception in ' + remoteCall.name + ' - ' + err.message + (' ' + err.stack));
-                    }
-                    else {
-                        this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
-                                data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
-                            'Exception in ' + remoteCall.name + ' - ' + err.message);
-                    }
-                    
-                }
-                
-                packageChanges.call(this, {type: 'error', sync: true, value: getError.call(this, err), name: remoteCall.name, remoteCallId: remoteCallId});
-            }
-        }
-
-        /**
-         * Distinquish between an actual error (will throw an Error object) and a string that the application may
-         * throw which is to get piped back to the caller.  For an actual error we want to log the stack trace
-         * @param err
-         * @returns {*}
-         */
-        function getError(err) {
-            if (err instanceof Error) {
-                return {code: 'internal_error', text: 'An internal error occurred'};
-            }
-            else {
-                if (typeof(err) == 'string') {
-                    return {message: err};
-                }
-                else {
-                    return err;
-                }
-            }
-        }
-
-        /**
-         * Deal with changes going back to the caller
-         * @param message
-         */
-        function packageChanges(message) {
-            this._convertArrayReferencesToChanges();
-            message.changes = JSON.stringify(this.getChanges());
-            
-            if (this.reqSession && this.reqSession.semotus && this.reqSession.semotus.callStartTime) {
-                this.reqSession.semotus.callStartTime = 0;
-            }
-            
-            session.sendMessage(message);
-            this._deleteChanges();
-            this._processQueue();
-        }
-
-        break;
-
     case 'response':
     case 'error':
         var doProcessQueue = true;
@@ -585,6 +373,217 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
         }
         
         return hadChanges == 2;
+    }
+    
+    
+    function logTime() {
+        return ((new Date()).getTime() - callContext.startTime.getTime());
+    }
+    
+    /**
+     * We process the call the remote method in stages starting by letting the controller examine the
+     * changes (preCallHook) and giving it a chance to refresh data if it needs to.  Then we apply any
+     * changes in the messages and give the object owning the method a chance to validate that the
+     * call is valid and take care of any authorization concerns.  Finally we let the controller perform
+     * any post-call processing such as commiting data and then we deal with a failure or success.
+     */
+    function processCall (forceupdate) {
+        return Q(forceupdate)
+            .then(preCallHook.bind(this))
+            .then(applyChangesAndValidateCall.bind(this))
+            .then(callIfValid.bind(this))
+            .then(postCallHook.bind(this))
+            .then(postCallSuccess.bind(this))
+            .fail(postCallFailure.bind(this));
+    }
+    
+    /**
+     * If there is an update conflict we want to retry after restoring the session
+     * @returns {*}
+     */
+    function retryCall () {
+        if (restoreSessionCallback) {
+            restoreSessionCallback();
+        }
+        
+        return processCall.call(this, true);
+    }
+    
+    /**
+     * Determine what objects changed and pass this to the preServerCall method on the controller
+     */
+    function preCallHook (forceupdate) {
+        this.logger.info({component: 'semotus', module: 'processMessage', activity: 'preServerCall',
+            data:{call: remoteCall.name, sequence: remoteCall.sequence}}, remoteCall.name);
+        
+        if (this.controller && this.controller['preServerCall']) {
+            var changes = {};
+            
+            for (var objId in JSON.parse(remoteCall.changes)) {
+                changes[this.__dictionary__[objId.replace(/[^-]*-/, '').replace(/-.*/, '')].__name__] = true;
+            }
+            
+            return this.controller['preServerCall'].call(this.controller, remoteCall.changes.length > 2, changes, callContext, forceupdate);
+        }
+        else {
+            return true;
+        }
+    }
+    
+    /**
+     * Apply changes in the message and then validate the call.  Throw "Sync Error" if changes can't be applied
+     */
+    function applyChangesAndValidateCall () {
+        this.logger.info({component: 'semotus', module: 'processMessage', activity: 'call',
+            data:{call: remoteCall.name, sequence: remoteCall.sequence, remoteCallId: remoteCall.id}}, remoteCall.name);
+        
+        var arguments = this._fromTransport(JSON.parse(remoteCall.arguments));
+        
+        if (this._applyChanges(JSON.parse(remoteCall.changes), this.role == 'client', subscriptionId)) {
+            var obj = session.objects[remoteCall.id];
+            
+            if (!obj) {
+                throw new Error('Cannot find object for remote call ' + remoteCall.id);
+            }
+            
+            if (this.role == 'server' && obj['validateServerCall']) {
+                return obj['validateServerCall'].call(obj, remoteCall.name, callContext);
+            }
+            else {
+                return true;
+            }
+        }
+        else {
+            throw 'Sync Error';
+        }
+    }
+    
+    /**
+     * If the changes could be applied and the validation was successful call the method
+     * @param isValid
+     */
+    function callIfValid(isValid) {
+        if (!isValid) {
+            throw new Error(remoteCall.name + ' refused');
+        }
+        
+        var obj = session.objects[remoteCall.id];
+        var arguments = this._fromTransport(JSON.parse(remoteCall.arguments));
+        
+        return obj[remoteCall.name].apply(obj, arguments);
+    }
+    
+    /**
+     * Let the controller know that the method was completed and give it a chance to commit changes
+     */
+    function postCallHook (returnValue) {
+        if (this.controller && this.controller['postServerCall']) {
+            return Q(this.controller['postServerCall'].call(this.controller, remoteCall.changes.length > 2, callContext))
+                .then(function () {
+                    return returnValue;
+                });
+        }
+        else {
+            return returnValue;
+        }
+    }
+    
+    /**
+     * Package up any changes resulting from the execution and send them back in the message, clearing
+     * our change queue to accumulate more changes for the next call
+     * @param ret
+     */
+    function postCallSuccess(ret) {
+        this.logger.info({component: 'semotus', module: 'processMessage', activity: 'postCall.success',
+            data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
+        
+        packageChanges.call(this, {type: 'response', sync: true, value: JSON.stringify(this._toTransport(ret)),
+            name: remoteCall.name,  remoteCallId: remoteCallId});
+    }
+    
+    /**
+     * Handle errors by returning an apropriate message.  In all cases changes sent back though they
+     * @param err
+     */
+    function postCallFailure(err) {
+        if (err == 'Sync Error') {
+            this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.syncError',
+                data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
+            
+            packageChanges.call(this, {type: 'response', sync: false, changes: '', remoteCallId: remoteCallId});
+        }
+        else if (err.message == 'Update Conflict') { // Not this may be caught in the trasport (e.g. Amorphic) and retried)
+            if (callContext.retries++ < 3) {
+                this.logger.warn({component: 'semotus', module: 'processMessage', activity: 'postCall.updateConflict',
+                    data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
+                
+                return Q.delay(callContext.retries * 1000).then(retryCall.bind(this));
+            }
+            else {
+                this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.updateConflict',
+                    data: {call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
+                
+                packageChanges.call(this, {type: 'retry', sync: false, remoteCallId: remoteCallId});
+            }
+        }
+        else {
+            if (!(err instanceof Error)) {
+                this.logger.info({component: 'semotus', module: 'processMessage', activity: 'postCall.error',
+                    data: {message: JSON.stringify(err), call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
+            }
+            else {
+                if (err.stack) {
+                    this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
+                            data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
+                        'Exception in ' + remoteCall.name + ' - ' + err.message + (' ' + err.stack));
+                }
+                else {
+                    this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
+                            data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
+                        'Exception in ' + remoteCall.name + ' - ' + err.message);
+                }
+                
+            }
+            
+            packageChanges.call(this, {type: 'error', sync: true, value: getError.call(this, err), name: remoteCall.name, remoteCallId: remoteCallId});
+        }
+    }
+    
+    /**
+     * Distinquish between an actual error (will throw an Error object) and a string that the application may
+     * throw which is to get piped back to the caller.  For an actual error we want to log the stack trace
+     * @param err
+     * @returns {*}
+     */
+    function getError(err) {
+        if (err instanceof Error) {
+            return {code: 'internal_error', text: 'An internal error occurred'};
+        }
+        else {
+            if (typeof(err) == 'string') {
+                return {message: err};
+            }
+            else {
+                return err;
+            }
+        }
+    }
+    
+    /**
+     * Deal with changes going back to the caller
+     * @param message
+     */
+    function packageChanges(message) {
+        this._convertArrayReferencesToChanges();
+        message.changes = JSON.stringify(this.getChanges());
+        
+        if (this.reqSession && this.reqSession.semotus && this.reqSession.semotus.callStartTime) {
+            this.reqSession.semotus.callStartTime = 0;
+        }
+        
+        session.sendMessage(message);
+        this._deleteChanges();
+        this._processQueue();
     }
 };
 
@@ -1591,20 +1590,6 @@ RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, forc
                 }
                 
                 for (var ix = 0; ix < length; ++ix) {
-                    
-                    function unarray(value) {
-                        try {
-                            if (value && (String(value)).substr(0, 1) == '=') {
-                                return JSON.parse((String(value)).substr(1));
-                            }
-                            
-                            return value;
-                        }
-                        catch (e) {
-                            return  '';
-                        }
-                    }
-
                     var unarray_newValue = unarray(newValue[ix]);
                     var validator = obj && (obj['validateServerIncomingProperty'] || this.controller['validateServerIncomingProperty']);
     
@@ -1655,6 +1640,19 @@ RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, forc
     
     this.changeCount++;
     return true;
+    
+    function unarray(value) {
+        try {
+            if (value && (String(value)).substr(0, 1) == '=') {
+                return JSON.parse((String(value)).substr(1));
+            }
+            
+            return value;
+        }
+        catch (e) {
+            return  '';
+        }
+    }
 };
 
 /**
@@ -1882,7 +1880,7 @@ RemoteObjectTemplate._rollbackChanges = function() {
     var session = this._getSession();
     var changes = this.getChanges();
     
-    for (objId in changes) {
+    for (var objId in changes) {
         var obj = session.objects[objId];
         
         if (obj) {
@@ -1932,10 +1930,11 @@ RemoteObjectTemplate._createEmptyObject = function(template, objId, defineProper
 
     var session = this._getSession();
     var sessionReference = session.objects[objId];
+    var newValue;
     
     if (sessionReference && !isTransient) {
         if (sessionReference.__template__ == template) {
-            var newValue = sessionReference;
+            newValue = sessionReference;
         }
         else {
             throw new Error('_createEmptyObject called for ' + template.__name__ +
@@ -1951,7 +1950,7 @@ RemoteObjectTemplate._createEmptyObject = function(template, objId, defineProper
             this.__transient__ = true; // prevent stashObject from adding to sessions.objects
         }
         
-        var newValue = new template();
+        newValue = new template();
         this.__transient__ = wasTransient;
         
         if (isTransient) {
