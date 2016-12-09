@@ -31,8 +31,14 @@ if (typeof(require) != 'undefined') {
 
 var RemoteObjectTemplate = ObjectTemplate._createObject();
 
-RemoteObjectTemplate._useGettersSetters = typeof(window) == 'undefined' ? true : false;
-RemoteObjectTemplate.role = (typeof(window) == 'undefined') ? 'server' : 'client';
+RemoteObjectTemplate._useGettersSetters = typeof(window) == 'undefined';
+
+RemoteObjectTemplate.role = 'client';
+
+if (typeof(window) == 'undefined') {
+    RemoteObjectTemplate.role = 'server';
+}
+
 RemoteObjectTemplate.__changeTracking__ = true; // Set __changed__ when setter fires
 RemoteObjectTemplate.__conflictMode__ = 'hard';
 
@@ -47,7 +53,12 @@ RemoteObjectTemplate.log = function (level, data) {
         return;
     }
     
-    var extraID = this.reqSession && this.reqSession.loggingID ? '-' + this.reqSession.loggingID : '';
+    var extraID = '';
+    
+    if (this.reqSession && this.reqSession.loggingID) {
+        extraID = '-' + this.reqSession.loggingID;
+    }
+    
     var t = new Date();
     
     var time = t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate() + ' ' + t.toTimeString().replace(/ .*/, '') + ':' + t.getMilliseconds();
@@ -70,14 +81,16 @@ RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
         this.sessions = {};
     }
 
-    var sessionId = sessionId ? sessionId : this.nextSessionId++;
+    if (!sessionId) {
+        sessionId = this.nextSessionId++;
+    }
     
     this.setSession(sessionId);
     
     this.sessions[sessionId] = {
         subscriptions: {},              // Change listeners
         sendMessage: sendMessage,       // Send message callback
-        sendMessageEnabled: sendMessage ? true : false,
+        sendMessageEnabled: !!sendMessage,
         remoteCalls: [],                // Remote calls queued to go out
         pendingRemoteCalls: {},         // Remote calls waiting for response
         nextPendingRemoteCallId: 1,
@@ -93,12 +106,13 @@ RemoteObjectTemplate.createSession = function(role, sendMessage, sessionId) {
         for (var ix = 0; ix < role.length; ++ix) {
             this.subscribe(role[ix]);
         }
+    
+        this.role = role[1];
     }
     else {
         this.subscribe(role);
+        this.role = role;
     }
-    
-    this.role = role instanceof  Array ? role[1] : role;
     
     return sessionId;
 };
@@ -470,9 +484,17 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
                         data: {message: JSON.stringify(err), call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}}, remoteCall.name);
                 }
                 else {
-                    this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
-                            data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
-                        'Exception in ' + remoteCall.name + ' - ' + err.message + (err.stack ? ' ' + err.stack : ''));
+                    if (err.stack) {
+                        this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
+                                data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
+                            'Exception in ' + remoteCall.name + ' - ' + err.message + (' ' + err.stack));
+                    }
+                    else {
+                        this.logger.error({component: 'semotus', module: 'processMessage', activity: 'postCall.exception',
+                                data: {message: err.message, call: remoteCall.name, callTime: logTime(), sequence: remoteCall.sequence}},
+                            'Exception in ' + remoteCall.name + ' - ' + err.message);
+                    }
+                    
                 }
                 
                 packageChanges.call(this, {type: 'error', sync: true, value: getError.call(this, err), name: remoteCall.name, remoteCallId: remoteCallId});
@@ -486,8 +508,17 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
          * @returns {*}
          */
         function getError(err) {
-            var errToSend = err instanceof Error ? {code: 'internal_error', text: 'An internal error occurred'} : typeof(err) == 'string' ? {message: err} : err;
-            return errToSend;
+            if (err instanceof Error) {
+                return {code: 'internal_error', text: 'An internal error occurred'};
+            }
+            else {
+                if (typeof(err) == 'string') {
+                    return {message: err};
+                }
+                else {
+                    return err;
+                }
+            }
         }
 
         /**
@@ -553,7 +584,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
             this._processQueue();
         }
         
-        return hadChanges == 2 ? true : false;
+        return hadChanges == 2;
     }
 };
 
@@ -642,16 +673,16 @@ RemoteObjectTemplate.clearPendingCalls = function (sessionId) {
  * @return {[]} the messages in an array
  *
  RemoteObjectTemplate.getMessages = function(sessionId) {
-	var session = this._getSession(sessionId);
-	var messages = [];
-	var message;
-	while (message = session.remoteCalls.shift())
-	{
-		var remoteCallId = session.nextPendingRemoteCallId++;
-		message.remoteCallId = remoteCallId;
-		messages.push(message);
-	}
-	return messages;
+    var session = this._getSession(sessionId);
+    var messages = [];
+    var message;
+    while (message = session.remoteCalls.shift())
+    {
+        var remoteCallId = session.nextPendingRemoteCallId++;
+        message.remoteCallId = remoteCallId;
+        messages.push(message);
+    }
+    return messages;
 }
  */
 RemoteObjectTemplate.getChangeGroup = function(type, subscriptionId) {
@@ -704,7 +735,7 @@ RemoteObjectTemplate.getChangeStatus = function() {
  */
 RemoteObjectTemplate._stashObject = function(obj, template) {
     var session = this._getSession(obj.__template__.remoteSessionId);
-    var isRemote = session.dispenseNextId ? true : false;
+    var isRemote = !!session.dispenseNextId;
     var objectId = session.dispenseNextId || (this.role + '-' + template.__name__ + '-' +  session.nextObjId++);
     session.dispenseNextId = null;
     
@@ -800,14 +831,30 @@ RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role
  */
 RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, objectProperties, defineProperties, parentTemplate) {
     //determine whether value needs to be re-initialized in constructor
-    var value = typeof(defineProperty.value) == 'undefined' ? null : defineProperty.value;
+    var value = null;
     
-    objectProperties[propertyName] = {
-        init:	 defineProperty.isVirtual ? undefined : value,
-        type:	 defineProperty.type,
-        of:		 defineProperty.of,
-        byValue: !(typeof(value) == 'boolean' || typeof(value) == 'number' || typeof(value) == 'string' || value == null)
-    };
+    if (typeof(defineProperty.value) != 'undefined') {
+        value = defineProperty.value;
+    }
+    
+    if (defineProperty.isVirtual) {
+        objectProperties[propertyName] = {
+            init:     undefined,
+            type:     defineProperty.type,
+            of:       defineProperty.of,
+            byValue: !(typeof(value) == 'boolean' || typeof(value) == 'number' || typeof(value) == 'string' || value == null)
+        };
+    }
+    else {
+        objectProperties[propertyName] = {
+            init:     value,
+            type:     defineProperty.type,
+            of:       defineProperty.of,
+            byValue: !(typeof(value) == 'boolean' || typeof(value) == 'number' || typeof(value) == 'string' || value == null)
+        };
+    }
+    
+    
 
     // One property for real name which will have a getter and setter
     // and another property for the actual value __propertyname
@@ -843,7 +890,10 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
             var prop = propertyName;
             
             return function (value) {
-                value = userSetter ? userSetter.call(this, value) : value;
+                
+                if (userSetter) {
+                    value = userSetter.call(this, value);
+                }
                 
                 if (!defineProperty.isVirtual && this.__id__ && createChanges && transform(this['__' + prop]) !== transform(value)) {
                     objectTemplate._changedValue(this, prop, value);
@@ -906,7 +956,14 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
                 if (!defineProperty.isVirtual && this['__' + prop] instanceof Array) {
                     objectTemplate._referencedArray(this, prop, this['__' + prop]);
                 }
-                return userGetter ? userGetter.call(this, this['__' + prop]) : this['__' + prop];
+                
+                if (userGetter) {
+                    return userGetter.call(this, this['__' + prop]);
+                }
+                else {
+                    return this['__' + prop];
+                }
+                
             };
         })();
     }
@@ -914,8 +971,13 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         defineProperty.set = (function() {
             // use a closure to record the property name which is not passed to the setter
             var prop = propertyName;
+            
             return function (value) {
-                value = userSetter ? userSetter.call(this, value) : value;
+                
+                if (userSetter) {
+                    value = userSetter.call(this, value);
+                }
+                
                 if (!defineProperty.isVirtual) {
                     this['__' + prop] = value;
                 }
@@ -923,9 +985,19 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         })();
 
         defineProperty.get = (function () {
-            // use closure to record property name which is not passed to the getter
+            // Use closure to record property name which is not passed to the getter
             var prop = propertyName; return function () {
-                return userGetter ? userGetter.call(this, defineProperty.isVirtual ? undefined : this['__' + prop]) : this['__' + prop];
+                
+                if (userGetter) {
+                    if (defineProperty.isVirtual) {
+                        return userGetter.call(this, undefined);
+                    }
+                    
+                    return userGetter.call(this, this['__' + prop]);
+                }
+                else {
+                    return this['__' + prop];
+                }
             };
         })();
 
@@ -940,7 +1012,7 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         objectProperties['__' + propertyName] = objectProperties[propertyName];
     }
 
-// Setters and Getters cannot have value or be writable
+    // Setters and Getters cannot have value or be writable
     if (this._useGettersSetters && this._manageChanges(defineProperty)) {
         delete defineProperty.value;
         delete defineProperty.writable;
@@ -1198,8 +1270,16 @@ RemoteObjectTemplate._convertArrayReferencesToChanges = function() {
                 if (!obj) {
                     continue;
                 }
-
-                var curr = obj[(this._useGettersSetters ? '__' : '') + prop];
+    
+                var curr;
+                
+                if (this._useGettersSetters) {
+                    curr = obj['__' + prop];
+                }
+                else {
+                    curr = obj[prop];
+                }
+                
                 var orig = refChangeGroup[key];
 
                 if (!curr) {
@@ -1215,7 +1295,12 @@ RemoteObjectTemplate._convertArrayReferencesToChanges = function() {
                 
                 for (var ix = 0; ix < len; ++ix) {
                     // See if the value has changed
-                    var currValue = (typeof(curr[ix]) != 'undefined' && curr[ix] != null) ? curr[ix].__id__ || ('=' + JSON.stringify(curr[ix])) : undefined;
+                    var currValue = undefined;
+                    
+                    if (typeof(curr[ix]) != 'undefined' && curr[ix] != null) {
+                        currValue = curr[ix].__id__ || ('=' + JSON.stringify(curr[ix]));
+                    }
+                    
                     var origValue = orig[ix];
                     
                     if (origValue !== currValue || (changeGroup[obj.__id__] && changeGroup[obj.__id__][prop] && changeGroup[obj.__id__][prop][1][ix] != currValue)) {
@@ -1284,7 +1369,15 @@ RemoteObjectTemplate.MarkChangedArrayReferences = function() {
                     continue;
                 }
 
-                var curr = obj[(this._useGettersSetters ? '__' : '') + prop];
+                var curr;
+                
+                if (this._useGettersSetters) {
+                    curr = obj['__' + prop];
+                }
+                else {
+                    curr = obj[prop];
+                }
+                
                 var orig = refChangeGroup[key];
 
                 if (!curr) {
@@ -1300,19 +1393,22 @@ RemoteObjectTemplate.MarkChangedArrayReferences = function() {
                 
                 for (var ix = 0; ix < len; ++ix) {
                     // See if the value has changed
-                    var currValue = (typeof(curr[ix]) != 'undefined' && curr[ix] != null) ? curr[ix].__id__ || ('=' + JSON.stringify(curr[ix])) : undefined;
+                    var currValue =  undefined;
+                    
+                    if (typeof(curr[ix]) != 'undefined' && curr[ix] != null) {
+                        currValue = curr[ix].__id__ || ('=' + JSON.stringify(curr[ix]));
+                    }
+                    
                     var origValue = orig[ix];
                     
                     if (origValue !== currValue) {
                         obj.__changed__ = true;
                     }
                 }
-
             }
         }
     }
 };
-
 
 /**
  * Convert property value to suitabile change format which is always a string
@@ -1327,7 +1423,17 @@ RemoteObjectTemplate._convertValue = function (value) {
         var newValue = [];
         
         for (var ix = 0; ix < value.length; ++ix) {
-            newValue[ix] =  value[ix] ? value[ix].__id__ || (typeof(value[ix]) == 'object' ? JSON.stringify(value[ix]) : value[ix].toString()) : null;
+            if (value[ix]) {
+                if (typeof(value[ix]) == 'object') {
+                    newValue[ix] = value[ix].__id__ || JSON.stringify(value[ix]);
+                }
+                else {
+                    newValue[ix] = value[ix].__id__ || value[ix].toString();
+                }
+            }
+            else {
+                newValue[ix] = null;
+            }
         }
         
         return newValue;
@@ -1339,7 +1445,15 @@ RemoteObjectTemplate._convertValue = function (value) {
         return value.getTime();
     }
     else {
-        return value ? (typeof(value) == 'object' ? JSON.stringify(value) : value.toString()) : value;
+        if (value) {
+            if (typeof(value) == 'object') {
+                return JSON.stringify(value);
+            }
+            
+            return value.toString();
+        }
+        
+        return value;
     }
 };
 
@@ -1347,7 +1461,11 @@ RemoteObjectTemplate.getObject = function(objId, template) {
     var session = this._getSession();
     var obj = session.objects[objId];
     
-    return obj && obj.__template__ && obj.__template__ == template ? obj : null;
+    if (obj && obj.__template__ && obj.__template__ == template) {
+        return obj;
+    }
+    
+    return null;
 };
 
 /**
@@ -1362,7 +1480,7 @@ RemoteObjectTemplate.getObject = function(objId, template) {
  * @private
  */
 RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
-    var session = this._getSession();	var rollback = [];
+    var session = this._getSession();    var rollback = [];
     this.processingSubscription = this._getSubscription(subscriptionId);
 
     // Walk through change queue looking for objects and applying new values or rolling back
@@ -1392,7 +1510,15 @@ RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
         }
         
         var validator = obj && (obj['validateServerIncomingObject'] || this.controller['validateServerIncomingObject']);
-        var validatorThis = (obj && obj['validateServerIncomingObject']) ? obj : this.controller;
+    
+        var validatorThis;
+        
+        if (obj && obj['validateServerIncomingObject']) {
+            validatorThis = obj;
+        }
+        else {
+            validatorThis = this.controller;
+        }
         
         if (validator) {
             validator.call(validatorThis, obj);
@@ -1415,7 +1541,11 @@ RemoteObjectTemplate._applyChanges = function(changes, force, subscriptionId) {
     this.processingSubscription = null;
     this.logger.debug({component: 'semotus', module: 'applyChanges', activity: 'dataLogging', data:{count: this.changeCount, values: this.changeString}});
     
-    return hasObjects ? 2 : 1;
+    if (hasObjects) {
+        return 2;
+    }
+    
+    return 1;
 };
 
 /**
@@ -1451,13 +1581,24 @@ RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, forc
                     obj.__tainted__ = true;
                 }
                 
-                var length = Math.max(newValue.length, oldValue ? oldValue.length : 0);
+                var length;
+                
+                if (oldValue) {
+                    length = Math.max(newValue.length, oldValue.length);
+                }
+                else {
+                    length = Math.max(newValue.length, 0);
+                }
                 
                 for (var ix = 0; ix < length; ++ix) {
                     
                     function unarray(value) {
                         try {
-                            return (value && (String(value)).substr(0, 1) == '=') ? JSON.parse((String(value)).substr(1)) : value;
+                            if (value && (String(value)).substr(0, 1) == '=') {
+                                return JSON.parse((String(value)).substr(1));
+                            }
+                            
+                            return value;
                         }
                         catch (e) {
                             return  '';
@@ -1466,14 +1607,29 @@ RemoteObjectTemplate._applyObjectChanges = function(changes, rollback, obj, forc
 
                     var unarray_newValue = unarray(newValue[ix]);
                     var validator = obj && (obj['validateServerIncomingProperty'] || this.controller['validateServerIncomingProperty']);
-                    var validatorThis = (obj && obj['validateServerIncomingProperty']) ? obj : this.controller;
+    
+                    var validatorThis;
+                    
+                    if (obj && obj['validateServerIncomingProperty']) {
+                        validatorThis = obj;
+                    }
+                    else {
+                        validatorThis = this.controller;
+                    }
                     
                     if (validator) {
                         validator.call(validatorThis, obj, prop, ix, defineProperty, unarray_newValue);
                     }
 
-                    if (!this._applyPropertyChange(changes, rollback, obj, prop, ix, oldValue ? unarray(oldValue[ix]) : null, unarray_newValue, force)) {
-                        return false;
+                    if (oldValue) {
+                        if (!this._applyPropertyChange(changes, rollback, obj, prop, ix, unarray(oldValue[ix]), unarray_newValue, force)) {
+                            return false;
+                        }
+                    }
+                    else {
+                        if (!this._applyPropertyChange(changes, rollback, obj, prop, ix, null, unarray_newValue, force)) {
+                            return false;
+                        }
                     }
                 }
                 
@@ -1521,12 +1677,18 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
 
     // Get old, new and current value to determine if change is still applicable
     try {
-        var currentValue = (ix >= 0) ? obj[prop][ix] : obj[prop];
+        var currentValue;
+        
+        if (ix >= 0) {
+            currentValue = obj[prop][ix];
+        }
+        else {
+            currentValue = obj[prop];
+        }
     }
     catch (e) {
         this.logger.error({component: 'semotus', module: 'applyPropertyChange', activity: 'processing'},
-            'Could not apply change to ' + obj.__template__.__name__ + '.' + prop +
-            ' based on property definition');
+            'Could not apply change to ' + obj.__template__.__name__ + '.' + prop + ' based on property definition');
         
         return false;
     }
@@ -1576,20 +1738,50 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
     var objId = null;
     
     if (type == Number) {
-        newValue = newValue == null ? null : Number(newValue);
+        if (newValue == null) {
+            newValue = null;
+        }
+        else {
+            newValue = Number(newValue);
+        }
     }
     else if (type == String) {} //TODO: Why? This should not be a pattern for if/else ifs
     else if (type == Boolean) {
-        newValue = newValue == null ? null : (newValue == 'false' ? false : (newValue ? true : false));
+        if (newValue == null) {
+            newValue = null;
+        }
+        else {
+            if (newValue == 'false') {
+                newValue = false;
+            }
+            else {
+                if (newValue) {
+                    newValue = true;
+                }
+                else {
+                    newValue = false;
+                }
+            }
+        }
     }
     else if (type == Date) {
-        newValue =  newValue == null ? null : new Date(newValue);
+        if (newValue == null) {
+            newValue = null;
+        }
+        else {
+            newValue = new Date(newValue);
+        }
     }
     else if (type == Object && newValue) {
         try {
-            newValue = (typeof(newValue) == 'string') ?
-                (JSON.parse((newValue && newValue.substr(0, 1) == '=') ? newValue.substr(1) : newValue))
-                : newValue;
+            if (typeof(newValue) == 'string') {
+                if (newValue && newValue.substr(0, 1) == '=') {
+                    newValue = JSON.parse(newValue.substr(1));
+                }
+                else {
+                    newValue = JSON.parse(newValue);
+                }
+            }
         }
         catch (e) {} // Just leave it as is
     }
@@ -1639,9 +1831,27 @@ RemoteObjectTemplate._applyPropertyChange = function(changes, rollback, obj, pro
             }
         }
     }
-
-    var logValue = objId ? '{' +  objId + '}' : newValue instanceof Array ? '[' + newValue.length + ']' : newValue;
-    this.changeString[obj.__template__.__name__ + (ix >= 0 ? '[' + ix + ']' : '') + '.' + prop] = this.cleanPrivateValues(prop, logValue, defineProperty);
+    
+    var logValue;
+    
+    if (objId) {
+        logValue = '{' +  objId + '}';
+    }
+    else {
+        if (newValue instanceof Array) {
+            logValue = '[' + newValue.length + ']';
+        }
+        else {
+            logValue = newValue;
+        }
+    }
+    
+    if (ix >= 0) {
+        this.changeString[obj.__template__.__name__ + '[' + ix + ']' + '.' + prop] = this.cleanPrivateValues(prop, logValue, defineProperty);
+    }
+    else {
+        this.changeString[obj.__template__.__name__ + '.' + prop] = this.cleanPrivateValues(prop, logValue, defineProperty);
+    }
 
     rollback.push([obj, prop, ix, currentValue]);
     return true;
@@ -1978,7 +2188,12 @@ RemoteObjectTemplate._getSubscription = function(subscriptionId) {
 };
 
 RemoteObjectTemplate.cleanPrivateValues = function(prop, logValue, defineProperty) {
-    return prop.match(/password|ssn|socialsecurity|pin/i) && defineProperty.logChanges != 'false' ? '***' : logValue;
+    
+    if (prop.match(/password|ssn|socialsecurity|pin/i) && defineProperty.logChanges != 'false') {
+        return '***';
+    }
+    
+    return logValue;
 };
 
 if (typeof(module) != 'undefined') {
