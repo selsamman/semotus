@@ -141,11 +141,6 @@ RemoteObjectTemplate.setMinimumSequence = function(nextObjId) {
  */
 RemoteObjectTemplate.saveSession = function(sessionId) {
     var session = this._getSession(sessionId);
-    var callCount = 0;
-    
-    for (var calls in session.pendingRemoteCalls) {
-        ++callCount;
-    }
     
     session.nextSaveSessionId = session.nextSaveSessionId + 1;
     session.savedSessionId = session.nextSaveSessionId;
@@ -167,13 +162,8 @@ RemoteObjectTemplate.saveSession = function(sessionId) {
 
 RemoteObjectTemplate.getPendingCallCount = function(sessionId) {
     var session = this._getSession(sessionId);
-    var callCount = 0;
     
-    for (var calls in session.pendingRemoteCalls) {
-        ++callCount;
-    }
-    
-    return callCount;
+    return session.pendingRemoteCalls.length;
 };
 
 /**
@@ -213,7 +203,7 @@ RemoteObjectTemplate.restoreSession = function(sessionId, savedSession, sendMess
  * @param sessionId
  */
 RemoteObjectTemplate.syncSession = function(sessionId) {
-    var session = this._getSession(sessionId);
+    this._getSession(sessionId);
     this.getChanges();
     this._deleteChanges();
 };
@@ -436,9 +426,7 @@ RemoteObjectTemplate.processMessage = function(remoteCall, subscriptionId, resto
     function applyChangesAndValidateCall () {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'call',
             data:{call: remoteCall.name, sequence: remoteCall.sequence, remoteCallId: remoteCall.id}}, remoteCall.name);
-        
-        var arguments = this._fromTransport(JSON.parse(remoteCall.arguments));
-        
+                
         if (this._applyChanges(JSON.parse(remoteCall.changes), this.role == 'client', subscriptionId)) {
             var obj = session.objects[remoteCall.id];
             
@@ -607,7 +595,7 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function () {
 
     function serialize (obj) {
         try {
-            return JSON.stringify(obj, function (key, value) {
+            return JSON.stringify(obj, function (_key, value) {
                 if (value && value.__template__ && value.__id__) {
                     if (idMap[value.__id__]) {
                         value = {__id__: value.__id__.toString()};
@@ -704,25 +692,22 @@ RemoteObjectTemplate.getChanges = function(subscriptionId) {
 };
 
 RemoteObjectTemplate.getChangeStatus = function() {
-    var session = this._getSession();
+    this._getSession();
+    
     var a = 0;
     var c = 0;
     
     for (var subscriptionId in this.subscriptions) {
         var changes = this.getChangeGroup('change', subscriptionId);
         
-        for (var change in changes) {
-            ++c;
-        }
+        c += changes.length;
         
         var arrays = this.getChangeGroup('array', subscriptionId);
         
-        for (var array in arrays) {
-            ++a;
-        }
+        a += arrays.length;
     }
     
-    return Number(' ') + a + ' arrays ' + c + ' changes ';
+    return a + ' arrays ' + c + ' changes ';
 };
 
 /**
@@ -828,7 +813,7 @@ RemoteObjectTemplate._setupFunction = function(propertyName, propertyValue, role
  * @param defineProperties - the property definitions to be processed by Object.defineProperty
  * @private
  */
-RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, objectProperties, defineProperties, parentTemplate) {
+RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, objectProperties, defineProperties) {
     //determine whether value needs to be re-initialized in constructor
     var value = null;
     
@@ -853,8 +838,6 @@ RemoteObjectTemplate._setupProperty = function(propertyName, defineProperty, obj
         };
     }
     
-    
-
     // One property for real name which will have a getter and setter
     // and another property for the actual value __propertyname
     defineProperties[propertyName] = defineProperty;
