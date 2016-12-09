@@ -54,7 +54,7 @@ module.exports = exports = {
         "comma-style": ERROR,
         "comma-dangle": ERROR,
         "max-statements-per-line": ERROR,
-        "quotes": ["error", "single", { "avoidEscape": true }],
+        "quotes": [ERROR, "single", { "avoidEscape": true }],
         
         // Medium Risk
         "eqeqeq": ERROR,
