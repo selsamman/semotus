@@ -1,4 +1,4 @@
-## 1.5.0
+## 1.5.1
 * Treat no pending remote call as a warning
 ## 1.4.1
 * Include 1.4 supertype
