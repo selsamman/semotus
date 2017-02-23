@@ -22,12 +22,16 @@
  RemoteObjectTemplate extends ObjectTemplate to provide a synchronization mechanism for
  objects created with it's templates.  The synchronization
  */
-if (typeof(require) != 'undefined') {
-    var Q = require('q');
-    var _ = require('underscore');
-    /** type {ObjectTemplate} */
-    var ObjectTemplate = require('supertype');
-}
+
+(function (root, factory) {
+    if (typeof define === "function" && define.amd) {
+        define(["q", "underscore", "supertype"], factory);
+    } else if (typeof exports === "object") {
+        module.exports = factory(require("q"), require("underscore"), require('supertype'));
+    } else {
+        root.Requester = factory(root._, root._, root.ObjectTemplate);
+    }
+}(this, function (Q, _, ObjectTemplate) {
 
 var RemoteObjectTemplate = ObjectTemplate._createObject();
 
@@ -2405,6 +2409,6 @@ RemoteObjectTemplate.cleanPrivateValues = function cleanPrivateValues(prop, logV
     return logValue;
 };
 
-if (typeof(module) != 'undefined') {
-    module.exports = RemoteObjectTemplate;
-}
+return RemoteObjectTemplate;
+
+}));
