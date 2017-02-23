@@ -840,6 +840,17 @@ RemoteObjectTemplate._injectIntoTemplate = function injectIntoTemplate(template)
 };
 
 /**
+ * Place an object within the current session by injecting ourselves into the __objectTemplate__ property
+ * @param obj
+ */
+RemoteObjectTemplate.sessionize = function(obj) {
+    obj.__objectTemplate__ = this;
+    obj.__amorphic__ = {
+        sessionize: RemoteObjectTemplate.sessionize.bind(this)
+    }
+}
+
+/**
  * Function called to wrap a function as remote call that returns a promise
  * that is wrapped such that "this" points to the object.  This is only done
  * if this is a remote function, meaning that the role established when defining
@@ -864,6 +875,10 @@ RemoteObjectTemplate._setupFunction = function setupFunction(propertyName, prope
         // Function wrapper it self will return a promise wrapped to setup the this pointer
         // the function body will queue a remote call to the client/server
         return function b() {
+
+            if (this.__objectTemplate__)
+                objectTemplate = this.__objectTemplate__;
+
             if (validate && this.controller) { //TODO: make this one if statement
                 if (!validate.call(this.controller)) {
                     return Q.reject('validation failure');
@@ -965,10 +980,18 @@ RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defin
         var createChanges = this._createChanges(defineProperty);
 
         defineProperty.set = (function set() {
+
+            if (this.__objectTemplate__)
+                objectTemplate = this.__objectTemplate__;
+
             // use a closure to record the property name which is not passed to the setter
             var prop = propertyName;
 
             return function f(value) {
+
+                if (defineProperty.type  && defineProperty.type.isObjectTemplate && value && !value.__objectTemplate__) {
+                    objectTemplate.sessionize(value);
+                }
 
                 if (userSetter) {
                     value = userSetter.call(this, value);
@@ -1034,6 +1057,10 @@ RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defin
             var prop = propertyName;
 
             return function z() {
+
+                if (this.__objectTemplate__)
+                    objectTemplate = this.__objectTemplate__;
+
                 if (!defineProperty.isVirtual && this['__' + prop] instanceof Array) {
                     objectTemplate._referencedArray(this, prop, this['__' + prop]);
                 }
@@ -1331,6 +1358,9 @@ RemoteObjectTemplate._referencedArray = function referencedArray(obj, prop, arra
                             if (typeof(elem) != 'undefined' && elem != null) {
                                 if (elem != null && elem.__id__) {
                                     old[ix] = elem.__id__;
+                                    if (!elem.__objectTemplate__) {
+                                        this.sessionize(elem);
+                                    }
                                 }
                                 else { // values start with an = to distinguish from ids
                                     old[ix] = '=' + JSON.stringify(elem);
