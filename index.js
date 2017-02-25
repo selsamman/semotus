@@ -815,7 +815,9 @@ RemoteObjectTemplate.getChangeStatus = function getChangeStatus() {
  * @private
  */
 RemoteObjectTemplate._stashObject = function stashObject(obj, template) {
-    var session = this._getSession(obj.__template__.remoteSessionId);
+    var session = this._getSession(obj.__template__.remoteSessionId, true);
+    if (!session)
+        return;
     var isRemote = !!session.dispenseNextId;
     var objectId = session.dispenseNextId || (this.role + '-' + template.__name__ + '-' +  session.nextObjId++);
     session.dispenseNextId = null;
@@ -852,6 +854,8 @@ RemoteObjectTemplate.sessionize = function(obj) {
     obj.__amorphic__ = {
         sessionize: RemoteObjectTemplate.sessionize.bind(this)
     }
+    this._stashObject(obj, obj.__template__);
+    return obj;
 }
 
 /**
@@ -2332,10 +2336,14 @@ RemoteObjectTemplate._trimArray = function trimArray(array) {
  *
  * @private
  */
-RemoteObjectTemplate._getSession = function getSession() {
+RemoteObjectTemplate._getSession = function getSession(_sid, dontThrow) {
     if (!this.currentSession) {
-        this.logger.error({component: 'semotus', module: 'getSession', activity: 'processing'}, 'RemoteObjectTemplate: Please create a session first');
-        throw new Error('RemoteObjectTemplate: Please create a session first');
+        if (dontThrow) {
+            return null;
+        } else {
+            this.logger.error({component: 'semotus', module: 'getSession', activity: 'processing'}, 'RemoteObjectTemplate: Please create a session first');
+            throw new Error('RemoteObjectTemplate: Please create a session first');
+        }
     }
 
     return this.sessions[this.currentSession];
@@ -2409,6 +2417,26 @@ RemoteObjectTemplate.cleanPrivateValues = function cleanPrivateValues(prop, logV
     return logValue;
 };
 
+RemoteObjectTemplate.supertypeClass = function (target, props) {
+    return ObjectTemplate.supertypeClass(target, props, RemoteObjectTemplate)
+};
+RemoteObjectTemplate.Supertype = function () {
+    return ObjectTemplate.Supertype.call(this, RemoteObjectTemplate);
+};
+RemoteObjectTemplate.property = function (props) {
+    return ObjectTemplate.property(props, RemoteObjectTemplate);
+}
+
+RemoteObjectTemplate.remote = function (defineProperty) {
+    defineProperty = defineProperty || {};
+    if (!defineProperty.on) {
+        defineProperty.on = 'server';
+    }
+    return function (target, propertyName, descriptor) {
+        target[propertyName] = RemoteObjectTemplate._setupFunction(propertyName, defineProperty.body,
+            defineProperty.on, defineProperty.validate);
+    }
+}
 return RemoteObjectTemplate;
 
 }));
