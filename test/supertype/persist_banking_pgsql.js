@@ -1,19 +1,18 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var ObjectTemplate = require('supertype');
 var PersistObjectTemplate = require('../../index.js')(ObjectTemplate, null, ObjectTemplate);
 PersistObjectTemplate.debugInfo = 'api;conflict;write;read;data'; //'api;io';
 PersistObjectTemplate.debugInfo = 'conflict;data'; //'api;io';
 PersistObjectTemplate.logger.setLevel('debug');
-var chai_1 = require("chai");
-var _ = require("underscore");
+var chai_1 = require('chai');
+var _ = require('underscore');
 var Customer_1 = require("./Customer");
-var Promise = require("bluebird");
+var Promise = require('bluebird');
 var Role_1 = require("./Role");
 var Account_1 = require("./Account");
 var ReturnedMail_1 = require("./ReturnedMail");
 var Address_1 = require("./Address");
-var Transaction_1 = require("./Transaction");
+var Transaction_1 = require('./Transaction');
 var schema = {
     Customer: {
         documentOf: 'pg/customer',

@@ -92,7 +92,7 @@ __decorate([
     __metadata("design:type", String)
 ], Customer.prototype, "nullString", void 0);
 __decorate([
-    index_1.property({ type: Role_1.Role }),
+    index_1.property({ getType: function () { return Role_1.Role; } }),
     __metadata("design:type", Array)
 ], Customer.prototype, "roles", void 0);
 __decorate([

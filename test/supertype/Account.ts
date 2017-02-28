@@ -27,10 +27,10 @@ export class Account extends Supertype {
     @property()
     number: number;
 
-    @property()
+    @property({type: String})
     title: Array<string>;
 
-    @property({type: Role})
+    @property({getType: () => {return Role}})
     roles: Array<Role> = [];
 
     @property({getType: () => {return Address}})

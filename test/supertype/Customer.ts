@@ -39,7 +39,7 @@ export class Customer extends Supertype {
     @property()
     nullString: string = null;
 
-    @property({type: Role})
+    @property({getType: () => {return Role}})
     roles:  Array<Role> = [];
 
     @property()

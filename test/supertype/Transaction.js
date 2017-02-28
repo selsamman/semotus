@@ -59,6 +59,10 @@ var Debit = (function (_super) {
     }
     return Debit;
 }(Transaction));
+Debit = __decorate([
+    index_1.supertypeClass,
+    __metadata("design:paramtypes", [Object, Object, Object])
+], Debit);
 exports.Debit = Debit;
 var Credit = (function (_super) {
     __extends(Credit, _super);
@@ -67,6 +71,10 @@ var Credit = (function (_super) {
     }
     return Credit;
 }(Transaction));
+Credit = __decorate([
+    index_1.supertypeClass,
+    __metadata("design:paramtypes", [Object, Object, Object])
+], Credit);
 exports.Credit = Credit;
 var Xfer = (function (_super) {
     __extends(Xfer, _super);
@@ -80,8 +88,12 @@ var Xfer = (function (_super) {
     return Xfer;
 }(Transaction));
 __decorate([
-    index_1.property({ fetch: true }),
+    index_1.property({ fetch: true, getType: function () { return Account_1.Account; } }),
     __metadata("design:type", Account_1.Account)
 ], Xfer.prototype, "fromAccount", void 0);
+Xfer = __decorate([
+    index_1.supertypeClass,
+    __metadata("design:paramtypes", [Object, Object, Object, Object])
+], Xfer);
 exports.Xfer = Xfer;
 //# sourceMappingURL=Transaction.js.map

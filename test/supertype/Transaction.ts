@@ -22,21 +22,24 @@ export class Transaction  extends Supertype {
     account: Account;
 }
 
+@supertypeClass
 export class Debit extends Transaction {
     constructor (account, type, amount) {
         super(account, type, amount);
     }
 }
 
+@supertypeClass
 export class Credit extends Transaction {
     constructor (account, type, amount) {
         super(account, type, amount);
     }
 }
 
+@supertypeClass
 export class Xfer extends Transaction {
 
-    @property({fetch: true})
+    @property({fetch: true, getType: () =>{return Account}})
     fromAccount: Account;
 
     constructor (account, type, amount, fromAccount) {

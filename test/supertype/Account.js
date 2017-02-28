@@ -100,11 +100,11 @@ __decorate([
     __metadata("design:type", Number)
 ], Account.prototype, "number", void 0);
 __decorate([
-    index_1.property(),
+    index_1.property({ type: String }),
     __metadata("design:type", Array)
 ], Account.prototype, "title", void 0);
 __decorate([
-    index_1.property({ type: Role_1.Role }),
+    index_1.property({ getType: function () { return Role_1.Role; } }),
     __metadata("design:type", Array)
 ], Account.prototype, "roles", void 0);
 __decorate([

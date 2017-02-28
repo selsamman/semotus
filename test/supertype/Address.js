@@ -26,7 +26,7 @@ var ReturnedMail_1 = require("./ReturnedMail");
 require("reflect-metadata");
 var Address = (function (_super) {
     __extends(Address, _super);
-    function Address(customer) {
+    function Address(customer, lines) {
         var _this = _super.call(this) || this;
         _this.lines = [];
         _this.city = '';
@@ -34,6 +34,7 @@ var Address = (function (_super) {
         _this.postalCode = '';
         _this.country = 'US';
         _this.returnedMail = [];
+        _this.lines = lines || [];
         _this.customer = customer;
         return _this;
     }
@@ -71,7 +72,7 @@ __decorate([
     __metadata("design:type", String)
 ], Address.prototype, "type", void 0);
 __decorate([
-    index_1.property({ of: ReturnedMail_1.ReturnedMail }),
+    index_1.property({ type: ReturnedMail_1.ReturnedMail }),
     __metadata("design:type", Array)
 ], Address.prototype, "returnedMail", void 0);
 __decorate([
@@ -80,7 +81,7 @@ __decorate([
 ], Address.prototype, "account", void 0);
 Address = __decorate([
     index_1.supertypeClass,
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [Object, Object])
 ], Address);
 exports.Address = Address;
 //# sourceMappingURL=Address.js.map

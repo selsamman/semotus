@@ -11,11 +11,13 @@ var _ = require("underscore");
 var ClientObjectTemplate = require('../index.js')._createObject();
 ClientObjectTemplate.role = "client";
 ClientObjectTemplate._useGettersSetters = false;
+ClientObjectTemplate.__conflictMode__ = 'soft';
 
 var ServerObjectTemplate = require('../index.js')._createObject();
 ServerObjectTemplate.role = "server";
 ServerObjectTemplate._useGettersSetters = true;
 ServerObjectTemplate.maxCallTime = 60 * 1000;
+ServerObjectTemplate.__conflictMode__ = 'soft';
 
 
 function sendToServer(message) {
