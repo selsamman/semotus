@@ -20,6 +20,7 @@ export class Supertype {
     static knexChildJoin(targetTemplate, primaryAlias, targetAlias, joinKey)
     _id: Object;
     __id__: String;
+    __empty__: boolean;
 
     toJSONString()
     setDirty()

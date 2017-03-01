@@ -80,7 +80,7 @@ ServerObjectTemplate.logLevel = 1;
 ServerObjectTemplate.logger.setLevel('info;activity:dataLogging');
 ServerObjectTemplate.sessionize(serverController);
 
-describe("Banking Example", function () {
+describe("Typescript Banking Example", function () {
 
     it("pass object graph to server and return", function (done) {
        RemoteObjectTemplate.serverAssert = function () {
