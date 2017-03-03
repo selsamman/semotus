@@ -860,16 +860,19 @@ RemoteObjectTemplate.sessionize = function(obj, referencingObj) {
             obj.__pendingArrayReferences__.forEach(function (params) {
                 objectTemplate._referencedArray.apply(objectTemplate, params);
             });
+            obj.__pendingArrayReferences__ = undefined;
         }
         if (obj.__pendingChanges__) {
             obj.__pendingChanges__.forEach(function (params) {
                 objectTemplate._changedValue.apply(objectTemplate, params);
             });
+            obj.__pendingChanges__ = undefined;
         }
         if (obj.__referencedObjects__) {
             obj.__referencedObjects__.forEach(function (referencedObj) {
                 objectTemplate.sessionize(referencedObj, obj);
             });
+            obj.__referencedObjects__ = undefined;
         }
         return obj;
     } else {
@@ -1019,13 +1022,14 @@ RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defin
 
         defineProperty.set = (function set() {
 
-            if (this.__objectTemplate__)
-                objectTemplate = this.__objectTemplate__;
-
             // use a closure to record the property name which is not passed to the setter
             var prop = propertyName;
 
             return function f(value) {
+
+                if (this.__objectTemplate__)
+                    objectTemplate = this.__objectTemplate__;
+
 
                 // Sessionize reference if it is missing an __objectTemplate__
                 if (defineProperty.type  && defineProperty.type.isObjectTemplate && value && !value.__objectTemplate__) {
