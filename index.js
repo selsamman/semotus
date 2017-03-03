@@ -2177,7 +2177,7 @@ RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, o
             newValue.__transient__ = true;
         }
 
-        if (!newValue.__objectTemplate__) {  //  Non-TS templates will have __objectTemplate__
+        if (!newValue.__objectTemplate__ && this.sessions) {  //  Non-TS templates will have __objectTemplate__
             this.sessionize(newValue, {__objectTemplate__: this});
         }
     }
