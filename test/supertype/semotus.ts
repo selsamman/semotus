@@ -78,7 +78,6 @@ ServerObjectTemplate.__changeTracking__ = true;
 ServerObjectTemplate.reqSession = {loggingID: "test", semotus: {}};
 ServerObjectTemplate.logLevel = 1;
 ServerObjectTemplate.logger.setLevel('info;activity:dataLogging');
-ServerObjectTemplate.sessionize(serverController);
 
 describe("Typescript Banking Example", function () {
 
@@ -88,7 +87,11 @@ describe("Typescript Banking Example", function () {
             expect(serverController.sam.roles[1].account.getBalance()).to.equal(125);
             expect(serverController.preServerCallObjects['Controller']).to.equal(true);
        }
+        expect(clientController.sam.roles[0].account.getBalance()).to.equal(100);
+        expect(clientController.sam.roles[1].account.getBalance()).to.equal(125);
        clientController.mainFunc().then(function () {
+           expect(clientController.sam.roles[0].account.getBalance()).to.equal(100);
+           expect(clientController.sam.roles[1].account.getBalance()).to.equal(125);
            done();
        }).fail(function(e) {
            done(e)
@@ -103,7 +106,7 @@ describe("Typescript Banking Example", function () {
             expect(serverController.sam.roles[0].account.transactions[0].__changed__).to.equal(true);
         }
         clientController.mainFunc().then(function () {
-            expect(serverController.sam.roles[0].account.getBalance()).to.equal(200);
+            expect(clientController.sam.roles[0].account.getBalance()).to.equal(200);
             done();
         }).fail(function(e) {
             done(e)

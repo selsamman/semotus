@@ -863,7 +863,7 @@ RemoteObjectTemplate.sessionize = function(obj, referencingObj) {
         }
         if (obj.__pendingChanges__) {
             obj.__pendingChanges__.forEach(function (params) {
-                objectTemplate._changedValue(objectTemplate, params);
+                objectTemplate._changedValue.apply(objectTemplate, params);
             });
         }
         if (obj.__referencedObjects__) {
@@ -1027,8 +1027,16 @@ RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defin
 
             return function f(value) {
 
+                // Sessionize reference if it is missing an __objectTemplate__
                 if (defineProperty.type  && defineProperty.type.isObjectTemplate && value && !value.__objectTemplate__) {
                     objectTemplate.sessionize(value, this);
+                }
+                if (defineProperty.of  &&  defineProperty.of.isObjectTemplate) {
+                    value.forEach(function (value) {
+                        if (!value.__objectTemplate__) {
+                            objectTemplate.sessionize(value, this);
+                        }
+                    }.bind(this));
                 }
 
                 if (userSetter) {
@@ -1323,8 +1331,8 @@ RemoteObjectTemplate._changedValue = function changedValue(obj, prop, value) {
 
     var subscriptions = this._getSubscriptions();
     if (!subscriptions) {
-        this.__pendingChanges__ = this.__pendingChanges__ || [];
-        this.__pendingChanges__.push([obj, prop, value]);
+        obj.__pendingChanges__ = obj.__pendingChanges__ || [];
+        obj.__pendingChanges__.push([obj, prop, value]);
         return;
     }
 
@@ -2138,7 +2146,7 @@ RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, o
     template = this._resolveSubClass(template, objId, defineProperty);
 
     var session = this._getSession();
-    var sessionReference = session.objects[objId];
+    var sessionReference = session ? session.objects[objId] : null;
     var newValue;
 
     if (sessionReference && !isTransient) {
