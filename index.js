@@ -185,7 +185,7 @@ RemoteObjectTemplate.saveSession = function saveSession(sessionId) {
 /**
  * A public function to determine whether there are remote calls in progress
  *
- * @param {unknown} sessionId unknown
+ * @param {String} sessionId Unique identifier from which the session is fetched.
  *
  * @returns {Number} The number of remote calls pending in the session.
  */
