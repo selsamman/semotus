@@ -187,12 +187,12 @@ RemoteObjectTemplate.saveSession = function saveSession(sessionId) {
  *
  * @param {unknown} sessionId unknown
  *
- * @returns {unknown} unknown
+ * @returns {Number} The number of remote calls pending in the session.
  */
 RemoteObjectTemplate.getPendingCallCount = function getPendingCallCount(sessionId) {
     var session = this._getSession(sessionId);
-
-    return session.pendingRemoteCalls.length;
+    
+    return Object.keys(session.pendingRemoteCalls).length;
 };
 
 /**
