@@ -822,7 +822,7 @@ RemoteObjectTemplate._stashObject = function stashObject(obj, template) {
 
     var executeInit = !!this.nextDispenseId;  // If coming from createEmptyObject
 
-    if (!obj.__id__) {  // If this comes from a delayed sessionize call don't change the id 
+    if (!obj.__id__) {  // If this comes from a delayed sessionize call don't change the id
         var objectId = this.nextDispenseId || (this.role + '-' + template.__name__ + '-' +  this.nextObjId++);
         obj.__id__ = objectId;
     }
@@ -850,17 +850,15 @@ RemoteObjectTemplate._stashObject = function stashObject(obj, template) {
  */
 RemoteObjectTemplate.sessionize = function(obj, referencingObj) {
     var objectTemplate = referencingObj ? referencingObj.__objectTemplate__ : this;
+    if (obj.__objectTemplate__)
+        return;
+
     if (objectTemplate) {
         obj.__objectTemplate__ = objectTemplate;
-        obj.__amorphic__ = {
-            sessionize: RemoteObjectTemplate.sessionize.bind(objectTemplate)
-        }
+        obj.amorphicate = RemoteObjectTemplate.sessionize.bind(objectTemplate)
         this._stashObject(obj, obj.__template__, this);
         if (obj.__pendingArrayReferences__) {
-            obj.__pendingArrayReferences__.forEach(function (params) {
-                objectTemplate._referencedArray.apply(objectTemplate, params);
-            });
-            obj.__pendingArrayReferences__ = undefined;
+            this._referencedArray(obj);
         }
         if (obj.__pendingChanges__) {
             obj.__pendingChanges__.forEach(function (params) {
@@ -869,15 +867,16 @@ RemoteObjectTemplate.sessionize = function(obj, referencingObj) {
             obj.__pendingChanges__ = undefined;
         }
         if (obj.__referencedObjects__) {
-            obj.__referencedObjects__.forEach(function (referencedObj) {
+            for (var id in obj.__referencedObjects__) {
+                var referencedObj = obj.__referencedObjects__[id];
                 objectTemplate.sessionize(referencedObj, obj);
-            });
+            };
             obj.__referencedObjects__ = undefined;
         }
         return obj;
     } else {
-            obj.__referencedObjects__ = obj.__referencedObjects__ || [];
-            obj.__referencedObjects__.push(obj);
+        referencingObj.__referencedObjects__ = obj.__referencedObjects__ || {};
+        referencingObj.__referencedObjects__[obj.__id__] = obj;
     }
 }
 
@@ -1035,7 +1034,7 @@ RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defin
                 if (defineProperty.type  && defineProperty.type.isObjectTemplate && value && !value.__objectTemplate__) {
                     objectTemplate.sessionize(value, this);
                 }
-                if (defineProperty.of  &&  defineProperty.of.isObjectTemplate) {
+                if (defineProperty.of  &&  defineProperty.of.isObjectTemplate && value instanceof Array) {
                     value.forEach(function (value) {
                         if (!value.__objectTemplate__) {
                             objectTemplate.sessionize(value, this);
@@ -1380,6 +1379,8 @@ RemoteObjectTemplate._changedValue = function changedValue(obj, prop, value) {
  *
  * @private
  */
+RemoteObjectTemplate._referencedArrayWithChangeGroup = function (obj) {
+ }
 RemoteObjectTemplate._referencedArray = function referencedArray(obj, prop, arrayRef, sessionId) {
     if (obj.__transient__ || this.__transient__ ||
         (this.role == 'client' && obj.__template__.__toServer__ == false) ||
@@ -1387,53 +1388,68 @@ RemoteObjectTemplate._referencedArray = function referencedArray(obj, prop, arra
         return;
     }
 
-
     // Track this for each subscription
     var subscriptions = this._getSubscriptions(sessionId);
-    if (!subscriptions) {
+    if (subscriptions) { // sessionized?
+        // Create the change group for array references and for dirty tracking of array references
+        processSubscriptions.call(this, 'array', obj.__pendingArrayReferences__);
+        if (this.__changeTracking__) {
+            processSubscriptions.call(this, 'arrayDirty', obj.__pendingArrayDirtyReferences__);
+        }
+        obj.__pendingArrayReferences__ = undefined;
+        obj.__pendingArrayDirtyReferences__ = undefined;
+    } else {
+        // Record the change group right in the object
         obj.__pendingArrayReferences__ = obj.__pendingArrayReferences__ || [];
-        obj.__pendingArrayReferences__.push([obj, prop, arrayRef]);
-        return;
+        processChangeGroup(obj.__pendingArrayReferences__);
+        obj.__pendingArrayDirtyReferences__ = obj.__pendingArrayReferences__ || [];
+        processChangeGroup(obj.__pendingArrayDirtyReferences__);
     }
 
-    processSubscriptions.call(this, 'array');
-    if (this.__changeTracking__) {
-        processSubscriptions.call(this, 'arrayDirty');
-    }
-
-    function processSubscriptions(changeType) {
+    // Create a change group entries either from the referenced array or from a previously saved copy of the array
+    function processSubscriptions(changeType, existingChangeGroup) {
         for (var subscription in subscriptions) {
             var changeGroup = this.getChangeGroup(changeType, subscription);
-
             if (subscriptions[subscription] != this.processingSubscription) {
-                var key = obj.__id__ + '/' + prop;
-
-                // Only record the value on the first reference
-                if (!changeGroup[key]) {
-                    var old = [];
-
-                    // Walk through the array and grab the reference
-                    if (arrayRef) {
-                        for (var ix = 0; ix < arrayRef.length; ++ix) {
-                            var elem = arrayRef[ix];
-
-                            if (typeof(elem) != 'undefined' && elem != null) {
-                                if (elem != null && elem.__id__) {
-                                    old[ix] = elem.__id__;
-                                    if (!elem.__objectTemplate__) {
-                                        this.sessionize(elem, obj);
-                                    }
-                                }
-                                else { // values start with an = to distinguish from ids
-                                    old[ix] = '=' + JSON.stringify(elem);
-                                }
-                            }
-                        }
-                    }
-
-                    changeGroup[key] = old;
+                if (existingChangeGroup) {
+                    copyChangeGroup(changeGroup, existingChangeGroup);
+                } else {
+                    processChangeGroup(changeGroup);
                 }
             }
+        }
+    }
+
+    function copyChangeGroup(changeGroup, existingChangeGroup) {
+        for (var key in existingChangeGroup) {
+            changeGroup[key] = existingChangeGroup[key];
+        }
+    }
+
+    function processChangeGroup(changeGroup) {
+        var key = obj.__id__ + '/' + prop;
+
+        // Only record the value on the first reference
+        if (!changeGroup[key]) {
+            var old = [];
+
+            // Walk through the array and grab the reference
+            if (arrayRef) {
+                for (var ix = 0; ix < arrayRef.length; ++ix) {
+                    var elem = arrayRef[ix];
+
+                    if (typeof(elem) != 'undefined' && elem != null) {
+                        if (elem != null && elem.__id__) {
+                            old[ix] = elem.__id__;
+                        }
+                        else { // values start with an = to distinguish from ids
+                            old[ix] = '=' + JSON.stringify(elem);
+                        }
+                    }
+                }
+            }
+
+            changeGroup[key] = old;
         }
     }
 };
@@ -1520,6 +1536,9 @@ RemoteObjectTemplate._convertArrayReferencesToChanges = function convertArrayRef
                             var values = this._convertValue(orig);
                             changeGroup[obj.__id__][prop] = [this.clone(values), this.clone(values)];
                             changeGroup[obj.__id__][prop][1][ix] = currValue;
+                        }
+                        if (curr[ix].__id__ && !curr[ix].__objectTemplate__) {
+                            this.sessionize(curr[ix], obj);
                         }
                     }
 
@@ -2474,7 +2493,29 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
     objectTemplate = objectTemplate || this;
 
     this.supertypeClass = function (target, props) {
-        return ObjectTemplate.supertypeClass(target, props, objectTemplate)
+        var ret = ObjectTemplate.supertypeClass(target, props, objectTemplate)
+
+        // Mainly for peristor properties to make sure they get transported
+        target.createProperty = function (propertyName, defineProperty) {
+            if (defineProperty.body) {
+                target.prototype[propertyName] = objectTemplate._setupFunction(propertyName, defineProperty.body,
+                    defineProperty.on, defineProperty.validate);
+            } else {
+                target.prototype.__amorphicprops__[propertyName] = defineProperty;
+                // The getter actually initializes the property
+                defineProperty.get = function () {
+                    if (!this['__' + propertyName]) {
+                        this['__' + propertyName] =
+                            ObjectTemplate.clone(defineProperty.value, defineProperty.of || defineProperty.type || null);
+                    }
+                    return this['__' + propertyName];
+                }
+                var defineProperties = {}
+                objectTemplate._setupProperty(propertyName, defineProperty, undefined, defineProperties);
+                Object.defineProperties(target.prototype, defineProperties);
+            }
+        }
+        return ret;
     };
 
     this.Supertype = function () {
@@ -2487,8 +2528,6 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
         return function (target, targetKey) {
             baseDecorator(target, targetKey);
             var defineProperties = {}
-            props.enumerable = true;
-            props.writable = true;
             objectTemplate._setupProperty(targetKey, props, undefined, defineProperties);
             Object.defineProperties(target, defineProperties);
         }
