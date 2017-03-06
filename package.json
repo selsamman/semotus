@@ -5,7 +5,7 @@
     "version": "2.0.1",
     "dependencies": {
         "q": "1.x",
-        "supertype": "https://github.com/selsamman/supertype.git#e9946e2"
+        "supertype": "https://github.com/selsamman/supertype.git#f071567"
     },
     "devDependencies" : {
         "chai": "3.x",
