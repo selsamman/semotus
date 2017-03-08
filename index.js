@@ -2502,11 +2502,12 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
                     defineProperty.on, defineProperty.validate);
             } else {
                 target.prototype.__amorphicprops__[propertyName] = defineProperty;
+                var value = defineProperty.value;
                 // The getter actually initializes the property
                 defineProperty.get = function () {
                     if (!this['__' + propertyName]) {
                         this['__' + propertyName] =
-                            ObjectTemplate.clone(defineProperty.value, defineProperty.of || defineProperty.type || null);
+                            ObjectTemplate.clone(value, defineProperty.of || defineProperty.type || null);
                     }
                     return this['__' + propertyName];
                 }
