@@ -2528,6 +2528,8 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
         return function (target, targetKey) {
             baseDecorator(target, targetKey);
             var defineProperties = {}
+            props.enumerable = true;
+            props.writable = true;
             objectTemplate._setupProperty(targetKey, props, undefined, defineProperties);
             Object.defineProperties(target, defineProperties);
         }
