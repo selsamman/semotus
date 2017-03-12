@@ -846,7 +846,8 @@ RemoteObjectTemplate._stashObject = function stashObject(obj, template) {
  * b) processing any pending array references
  * c) processing any pending changes
  * d) sessionizing any referenced objects
- * @param obj
+ * e) injecting amorphicate into the object
+ * @returns {*} returns the object so you can use
  */
 RemoteObjectTemplate.sessionize = function(obj, referencingObj) {
     var objectTemplate = referencingObj ? referencingObj.__objectTemplate__ : this;
@@ -878,6 +879,7 @@ RemoteObjectTemplate.sessionize = function(obj, referencingObj) {
         referencingObj.__referencedObjects__ = obj.__referencedObjects__ || {};
         referencingObj.__referencedObjects__[obj.__id__] = obj;
     }
+    return obj;
 }
 
 RemoteObjectTemplate._injectIntoObject = function injectIntoObject(obj) {
