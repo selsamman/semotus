@@ -1539,7 +1539,7 @@ RemoteObjectTemplate._convertArrayReferencesToChanges = function convertArrayRef
                             changeGroup[obj.__id__][prop] = [this.clone(values), this.clone(values)];
                             changeGroup[obj.__id__][prop][1][ix] = currValue;
                         }
-                        if (curr[ix].__id__ && !curr[ix].__objectTemplate__) {
+                        if (curr[ix] && curr[ix].__id__ && !curr[ix].__objectTemplate__) {
                             this.sessionize(curr[ix], obj);
                         }
                     }
