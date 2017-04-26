@@ -29,7 +29,7 @@
     } else if (typeof exports === "object") {
         module.exports = factory(require("q"), require("underscore"), require('supertype'));
     } else {
-        root.Requester = factory(root._, root._, root.RemoteObjectTemplate);
+        root.RemoteObjectTemplate = factory(root.Q, root._, root.ObjectTemplate);
     }
 }(this, function (Q, _, ObjectTemplate) {
 
