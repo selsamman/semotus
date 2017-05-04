@@ -1,3 +1,9 @@
+## 2.2.0
+* For use with 2.2.0 of Amorphic that creates memSession in objectTemplate for blocking calls detection
+## 2.1.1
+* Fix for `getPendingCallCount` that was blocking zombie mode from activating.
+## 2.1.0
+* Include 2.1.0 supertype
 ## 2.0.1
 * Fixed bug where __changed__ would be set for objects modified while __changeTracking__ off
 ## 2.0.0
