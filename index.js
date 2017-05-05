@@ -665,9 +665,9 @@ RemoteObjectTemplate.serializeAndGarbageCollect = function serializeAndGarbageCo
     function serialize(obj) {
         try {
             return JSON.stringify(obj, function y(key, value) {
-                if (key == '__objectTemplate__')                    {
-return null;
-}
+                if (key === '__objectTemplate__') {
+                    return null;
+                }
                 if (value && value.__template__ && value.__id__) {
                     if (idMap[value.__id__]) {
                         value = {__id__: value.__id__.toString()};
