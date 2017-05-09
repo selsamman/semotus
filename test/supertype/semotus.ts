@@ -24,6 +24,7 @@ ServerObjectTemplate.role = "server";
 ServerObjectTemplate._useGettersSetters = true;
 ServerObjectTemplate.maxCallTime = 60 * 1000;
 ServerObjectTemplate.__conflictMode__ = 'soft';
+ServerObjectTemplate.memSession = {semotus: {}};
 ServerObjectTemplate.__dictionary__ = RemoteObjectTemplate.__dictionary__;
 
 import { expect } from 'chai';
