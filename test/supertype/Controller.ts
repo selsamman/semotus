@@ -1,10 +1,20 @@
 import {Supertype, supertypeClass, property, remote} from '../../index';
+
+@supertypeClass({toClient: false, toServer: true})
+class Dummy {};
+
 import {Customer} from "./Customer";
 import {Account} from "./Account";
 import Promise = require('bluebird');
 import {Address} from "./Address";
 declare function require(name:string);
 var ObjectTemplate  = require('../../index.js');
+
+
+import { expect } from 'chai';
+expect(Dummy['__toClient__']).to.equal(false);
+expect(Dummy['__toServer__']).to.equal(true);
+
 
 @supertypeClass
 export class Controller extends Supertype {

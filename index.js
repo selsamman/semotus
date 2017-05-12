@@ -2505,32 +2505,51 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
 
     objectTemplate = objectTemplate || this;
 
-    this.supertypeClass = function (target, props) {
-        var ret = ObjectTemplate.supertypeClass(target, props, objectTemplate);
+    this.supertypeClass = function (target) {
 
-        // Mainly for peristor properties to make sure they get transported
-        target.createProperty = function (propertyName, defineProperty) {
-            if (defineProperty.body) {
-                target.prototype[propertyName] = objectTemplate._setupFunction(propertyName, defineProperty.body,
-                    defineProperty.on, defineProperty.validate);
-            }
- else {
-                target.prototype.__amorphicprops__[propertyName] = defineProperty;
-                var value = defineProperty.value;
-                // The getter actually initializes the property
-                defineProperty.get = function () {
-                    if (!this['__' + propertyName]) {
-                        this['__' + propertyName] =
-                            ObjectTemplate.clone(value, defineProperty.of || defineProperty.type || null);
-                    }
-                    return this['__' + propertyName];
-                };
-                var defineProperties = {};
-                objectTemplate._setupProperty(propertyName, defineProperty, undefined, defineProperties);
-                Object.defineProperties(target.prototype, defineProperties);
-            }
-        };
-        return ret;
+        var ret;
+
+	    // Called by decorator processor
+	    if (target.prototype) {
+		    return decorator(target);
+	    }
+
+	    // Called first time with parameter rather than target - call supertypes supertypeClass function which will
+        // return a function that must be called on the 2nd pass when we have a target.  It will remember parameter
+	    var ret = ObjectTemplate.supertypeClass(target, objectTemplate);
+	    return decorator; // decorator will be called 2nd time with ret as a closure
+
+        // Decorator workerbee
+        function decorator(target) {
+
+            // second time we must call the function returned the first time because it has the
+            // properties as a closure
+            ret =  ret ? ret(target, objectTemplate) : ObjectTemplate.supertypeClass(target, objectTemplate);
+
+            // Mainly for peristor properties to make sure they get transported
+            target.createProperty = function (propertyName, defineProperty) {
+                if (defineProperty.body) {
+                    target.prototype[propertyName] = objectTemplate._setupFunction(propertyName, defineProperty.body,
+                        defineProperty.on, defineProperty.validate);
+                }
+                else {
+                    target.prototype.__amorphicprops__[propertyName] = defineProperty;
+                    var value = defineProperty.value;
+                    // The getter actually initializes the property
+                    defineProperty.get = function () {
+                        if (!this['__' + propertyName]) {
+                            this['__' + propertyName] =
+                                ObjectTemplate.clone(value, defineProperty.of || defineProperty.type || null);
+                        }
+                        return this['__' + propertyName];
+                    };
+                    var defineProperties = {};
+                    objectTemplate._setupProperty(propertyName, defineProperty, undefined, defineProperties);
+                    Object.defineProperties(target.prototype, defineProperties);
+                }
+            };
+            return ret;
+        }
     };
 
     this.Supertype = function () {
