@@ -40,6 +40,12 @@ export class Controller extends Supertype {
     @property()
     ashling: Customer;
 
+    @remote({type: Customer})
+    decoratedSingle () {}
+
+    @remote({of: Customer})
+    decoratedMultiple () {}
+
     constructor () {
         super()
 
@@ -111,3 +117,8 @@ export class Controller extends Supertype {
     serverCallThrowException: Boolean = false;
     canValidateServerCall: Boolean = true;
 };
+
+expect(Controller.prototype.decoratedSingle['__returns__']).to.equal(Customer);
+expect(Controller.prototype.decoratedSingle['__returnsArray__']).to.equal(undefined);
+expect(Controller.prototype.decoratedMultiple['__returns__']).to.equal(Customer);
+expect(Controller.prototype.decoratedMultiple['__returnsArray__']).to.true;

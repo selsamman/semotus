@@ -914,7 +914,7 @@ RemoteObjectTemplate._setupFunction = function setupFunction(propertyName, prope
     var objectTemplate = this;
     var self = this;
 
-    if (role == null || role == this.role) {
+    if (!role || role == this.role) {
         return propertyValue;
     }
     else {
@@ -2577,6 +2577,13 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
         return function (target, propertyName, descriptor) {
             descriptor.value  = objectTemplate._setupFunction(propertyName, descriptor.value,
                 defineProperty.on, defineProperty.validate);
+            if (defineProperty.type) {
+                descriptor.value.__returns__ = defineProperty.type;
+            }
+            if (defineProperty.of) {
+                descriptor.value.__returns__ = defineProperty.of;
+                descriptor.value.__returnsarray__ = true;
+            }
         };
     };
 };
