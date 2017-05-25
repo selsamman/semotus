@@ -2630,7 +2630,15 @@ RemoteObjectTemplate.Remoteable = function (Base) {
         return class_1;
     }(Base));
 };
-
+RemoteObjectTemplate.Bindable = function (Base) {
+    return (function (_super) {
+        __extends(class_1, _super);
+        function class_1() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        return class_1;
+    }(Base));
+};
 
 RemoteObjectTemplate.bindDecorators(); //Default to binding to yourself
 

@@ -119,6 +119,6 @@ export class Controller extends Supertype {
 };
 
 expect(Controller.prototype.decoratedSingle['__returns__']).to.equal(Customer);
-expect(Controller.prototype.decoratedSingle['__returnsArray__']).to.equal(undefined);
+expect(Controller.prototype.decoratedSingle['__returnsarray__']).to.equal(undefined);
 expect(Controller.prototype.decoratedMultiple['__returns__']).to.equal(Customer);
-expect(Controller.prototype.decoratedMultiple['__returnsArray__']).to.true;
+expect(Controller.prototype.decoratedMultiple['__returnsarray__']).to.equal(true);
