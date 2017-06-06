@@ -2555,6 +2555,7 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
     this.Supertype = function () {
         return ObjectTemplate.Supertype.call(this, objectTemplate);
     };
+    this.Supertype.prototype = ObjectTemplate.Supertype.prototype;
 
     this.property = function (props) {
         props = props || {};
