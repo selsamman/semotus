@@ -83,7 +83,7 @@ ServerObjectTemplate.logger.setLevel('info;activity:dataLogging');
 describe("Typescript Banking Example", function () {
 
     it ('can log in a closed loop', function () {
-        var date = new Date('11/11/2010');
+        var date = new Date('2010-11-11T05:00:00.000Z');
         var output = '';
 
         var sam = clientController.sam;
