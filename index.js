@@ -1752,19 +1752,21 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
             }
         }
 
-        var validator = obj && (obj['validateServerIncomingObject'] || this.controller['validateServerIncomingObject']);
-
-        var validatorThis;
-
-        if (obj && obj['validateServerIncomingObject']) {
-            validatorThis = obj;
-        }
-        else {
-            validatorThis = this.controller;
-        }
-
-        if (validator) {
-            validator.call(validatorThis, obj);
+        if (this.role === 'server') {
+            var validator = obj && (obj['validateServerIncomingObject'] || this.controller['validateServerIncomingObject']);
+    
+            var validatorThis;
+    
+            if (obj && obj['validateServerIncomingObject']) {
+                validatorThis = obj;
+            }
+            else {
+                validatorThis = this.controller;
+            }
+    
+            if (validator) {
+                validator.call(validatorThis, obj);
+            }
         }
 
         if (!obj || !this._applyObjectChanges(changes, rollback, obj, force)) {
