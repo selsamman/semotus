@@ -882,7 +882,7 @@ return;
         return obj;
     }
  else {
-        referencingObj.__referencedObjects__ = obj.__referencedObjects__ || {};
+        referencingObj.__referencedObjects__ = referencingObj.__referencedObjects__ || {};
         referencingObj.__referencedObjects__[obj.__id__] = obj;
     }
     return obj;
