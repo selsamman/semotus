@@ -1035,19 +1035,16 @@ RemoteObjectTemplate._setupProperty = function setupProperty(propertyName, defin
 
             return function f(value) {
 
-                if (this.__objectTemplate__)                    {
-objectTemplate = this.__objectTemplate__;
-}
-
+                var currentObjectTemplate = this.__objectTemplate__? this.__objectTemplate__ : objectTemplate;
 
                 // Sessionize reference if it is missing an __objectTemplate__
                 if (defineProperty.type  && defineProperty.type.isObjectTemplate && value && !value.__objectTemplate__) {
-                    objectTemplate.sessionize(value, this);
+                    currentObjectTemplate.sessionize(value, this);
                 }
                 if (defineProperty.of  &&  defineProperty.of.isObjectTemplate && value instanceof Array) {
                     value.forEach(function (value) {
                         if (!value.__objectTemplate__) {
-                            objectTemplate.sessionize(value, this);
+                            currentObjectTemplate.sessionize(value, this);
                         }
                     }.bind(this));
                 }
@@ -1057,9 +1054,9 @@ objectTemplate = this.__objectTemplate__;
                 }
 
                 if (!defineProperty.isVirtual && this.__id__ && createChanges && transform(this['__' + prop]) !== transform(value)) {
-                    objectTemplate._changedValue(this, prop, value);
+                    currentObjectTemplate._changedValue(this, prop, value);
 
-                    if (objectTemplate.__changeTracking__) {
+                    if (currentObjectTemplate.__changeTracking__) {
                         this.__changed__ = true;
                     }
                 }
@@ -1115,14 +1112,12 @@ objectTemplate = this.__objectTemplate__;
             // use closure to record property name which is not passed to the getter
             var prop = propertyName;
 
-            return function z() {
+           return function z() {
 
-                if (this.__objectTemplate__)                    {
-objectTemplate = this.__objectTemplate__;
-}
+                var currentObjectTemplate = this.__objectTemplate__? this.__objectTemplate__ : objectTemplate;
 
                 if (!defineProperty.isVirtual && this['__' + prop] instanceof Array) {
-                    objectTemplate._referencedArray(this, prop, this['__' + prop]);
+                    currentObjectTemplate._referencedArray(this, prop, this['__' + prop]);
                 }
 
                 if (userGetter) {
