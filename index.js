@@ -1670,7 +1670,9 @@ RemoteObjectTemplate._convertValue = function convertValue(value) {
     else if (value instanceof Date) {
         return value.getTime();
     }
-    else {
+    else if (typeof (value) == 'number' && isNaN(value)) {
+        return null;
+    } else {
         if (value) {
             if (typeof(value) === 'object') {
                 return JSON.stringify(value);
