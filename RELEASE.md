@@ -1,3 +1,5 @@
+## 2.3.7
+* Fix for error handling in during `validateIncomingServerObject`.
 ## 2.3.5
 * Further fix (started in 2.3.2) to ensure array references for existing non-transient objects are recorded
 * Fix to avoid accumulating \__referencedObjects\__ for transient objects to avoid serialization errors. 
