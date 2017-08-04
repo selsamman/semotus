@@ -1930,7 +1930,12 @@ RemoteObjectTemplate._validateServerIncomingProperty = function (obj, prop, defi
     }
 
     if (validator) {
-        validator.call(validatorThis, obj, prop, defineProperty, newValue);
+        try {
+            validator.call(validatorThis, obj, prop, defineProperty, newValue);
+        }
+        catch(error) {
+            throw error;
+        }
     }
 
     return true;
