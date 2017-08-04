@@ -1915,6 +1915,7 @@ RemoteObjectTemplate._applyObjectChanges = function applyObjectChanges(changes, 
         }
     }
 };
+
 RemoteObjectTemplate._validateServerIncomingProperty = function (obj, prop, defineProperty, newValue) {
     var validator = obj && (obj['validateServerIncomingProperty'] ||
         this.controller['validateServerIncomingProperty']);
@@ -1934,6 +1935,7 @@ RemoteObjectTemplate._validateServerIncomingProperty = function (obj, prop, defi
 
 
 }
+
 /**
  * Apply changes for a specific property, cascading changes in the event
  * that a reference to an object that needs to be created is part of the change
