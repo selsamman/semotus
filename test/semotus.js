@@ -38,9 +38,11 @@ var ClientController = createTemplates(ClientObjectTemplate);
 var ServerController = createTemplates(ServerObjectTemplate);
 
 var clientController = new ClientController();
+
 ClientObjectTemplate.controller = clientController;
 
 var serverController = ServerObjectTemplate._createEmptyObject(ServerController, clientController.__id__);
+
 ServerObjectTemplate.syncSession();
 ServerObjectTemplate.controller = serverController;
 ServerObjectTemplate.__changeTracking__ = true;
@@ -66,6 +68,7 @@ function createTemplates(objectTemplate) {
         local1: {type: String, persist: false, value: 'local1'},
         local2: {type: String, isLocal: true, value: 'local2'}
     });
+    
     var Address = objectTemplate.create('Address', {
         init: function (customer) {
             this.customer = customer;
@@ -76,6 +79,7 @@ function createTemplates(objectTemplate) {
         postalCode: {type: String, value: '', length: 20},
         country: {type: String, value: 'US', length: 3}
     });
+    
     Customer.mixin({
         referredBy: {type: Customer, fetch: true},
         referrers: {type: Array, of: Customer, value: [], fetch: true},
@@ -90,6 +94,7 @@ function createTemplates(objectTemplate) {
         },
         addresses: {type: Array, of: Address, value: [], fetch: true}
     });
+    
     var ReturnedMail = objectTemplate.create('ReturnedMail', {
         date: {type: Date},
         address: {type: Address},
@@ -98,6 +103,7 @@ function createTemplates(objectTemplate) {
             this.date = date;
         }
     });
+    
     Address.mixin({
         customer: {type: Customer},
         returnedMail: {type: Array, of: ReturnedMail, value: []},
@@ -105,10 +111,12 @@ function createTemplates(objectTemplate) {
             this.returnedMail.push(new ReturnedMail(this, date));
         }
     });
+    
     var Role = objectTemplate.create('Role', {
         init: function (customer, account, relationship) {
             this.customer = customer;
             this.account = account;
+            
             if (relationship) {
                 this.relationship = relationship;
             }
@@ -123,8 +131,10 @@ function createTemplates(objectTemplate) {
                 this.address = address;
                 this.address.account = this;
             }
+            
             this.number = number;
             this.title = title;
+            
             if (customer) {
                 this.addCustomer(customer);
             }
@@ -132,6 +142,7 @@ function createTemplates(objectTemplate) {
         addCustomer: function (customer, relationship) {
             var role = new Role(customer, this, relationship);
             this.roles.push(role);
+            
             customer.roles.push(role);
         },
         number: {type: Number},
@@ -171,6 +182,7 @@ function createTemplates(objectTemplate) {
             
             processTransactions(this.transactions);
             processTransactions(this.fromAccountTransactions);
+            
             return balance;
         }
     });
@@ -183,9 +195,11 @@ function createTemplates(objectTemplate) {
             this.fromAccount = fromAccount;
             this.type = type;
             this.amount = amount;
+            
             if (account) {
                 account.transactions.push(this);
             }
+            
             if (fromAccount) {
                 fromAccount.fromAccountTransactions.push(this);
             }
@@ -232,7 +246,6 @@ function createTemplates(objectTemplate) {
             ashling.referredBy = sam;
             karen.referredBy = sam;
             sam.local1 = 'foo';
-            
             sam.local2 = 'bar';
             
             // Setup addresses
@@ -253,6 +266,7 @@ function createTemplates(objectTemplate) {
             // Setup accounts
             var samsAccount = new Account(1234, ['Sam Elsamman'], sam, sam.addresses[0]);
             var jointAccount = new Account(123, ['Sam Elsamman', 'Karen Burke', 'Ashling Burke'], sam, karen.addresses[0]);
+            
             jointAccount.addCustomer(karen, 'joint');
             jointAccount.addCustomer(ashling, 'joint');
             
@@ -276,6 +290,7 @@ function createTemplates(objectTemplate) {
             if (this.postServerCallThrowException) {
                 throw 'postServerCallThrowException';
             }
+            
             if (this.postServerCallThrowRetryException) {
                 throw 'Retry';
             }
@@ -308,19 +323,20 @@ function server() {
 
 describe('Banking Example', function () {
     
-    
     it('pass object graph to server and return', function (done) {
         serverAssert = function () {
             expect(serverController.sam.roles[0].account.getBalance()).to.equal(100);
             expect(serverController.sam.roles[1].account.getBalance()).to.equal(125);
             expect(serverController.preServerCallObjects['Controller']).to.equal(true);
         };
+        
         clientController.mainFunc().then(function () {
             done();
         }).fail(function (e) {
             done(e);
         });
     });
+    
     it('change results on server', function (done) {
         serverAssert = function () {
             expect(serverController.sam.roles[0].account.transactions[0].__changed__).to.equal(true);
@@ -328,6 +344,7 @@ describe('Banking Example', function () {
             serverController.sam.roles[0].account.transactions[0].amount = 200;
             expect(serverController.sam.roles[0].account.transactions[0].__changed__).to.equal(true);
         };
+        
         clientController.mainFunc().then(function () {
             expect(serverController.sam.roles[0].account.getBalance()).to.equal(200);
             done();
@@ -335,10 +352,12 @@ describe('Banking Example', function () {
             done(e);
         });
     });
+    
     it('throw an execption', function (done) {
         serverAssert = function () {
             throw 'get stuffed';
         };
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
@@ -349,9 +368,11 @@ describe('Banking Example', function () {
             done(e);
         });
     });
+    
     it('can get a validateServerIncomingProperty Scalar', function (done) {
         serverAssert = function () {
         }
+        
         serverController.validateServerIncomingProperty = function (obj, prop, defineProperty, val) {
             expect(obj.__template__.__name__).to.equal('Controller');
             expect(prop).to.equal('modPropString');
@@ -359,7 +380,9 @@ describe('Banking Example', function () {
             expect(val).to.equal('opps');
             throw 'get stuffed';
         }
+        
         clientController.modPropString = 'opps';
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
@@ -371,9 +394,11 @@ describe('Banking Example', function () {
             done(e);
         });
     });
+    
     it('can get a validateServerIncomingProperty Array', function (done) {
         serverAssert = function () {
         }
+        
         serverController.validateServerIncomingProperty = function (obj, prop, defineProperty, val) {
             expect(obj.__template__.__name__).to.equal('Controller');
             expect(prop).to.equal('modPropArray');
@@ -381,7 +406,9 @@ describe('Banking Example', function () {
             expect(val.length).to.equal(0);
             throw 'get stuffed';
         }
+        
         clientController.modPropArray = [];
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
@@ -393,14 +420,18 @@ describe('Banking Example', function () {
             done(e);
         });
     });
+    
     it('can get a validateServerIncomingObject', function (done) {
         serverAssert = function () {
         }
+        
         serverController.validateServerIncomingObject = function (obj) {
             expect(obj.__template__.__name__).to.equal('Controller');
             throw 'get stuffed';
         }
+        
         clientController.modPropString = 'opps2';
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
@@ -412,14 +443,18 @@ describe('Banking Example', function () {
             done(e);
         });
     });
+    
     it('can get a validateServerIncomingObjects', function (done) {
         serverAssert = function () {
         }
+        
         serverController.validateServerIncomingObjects = function (changes) {
             expect(changes['client-Controller-1'].modPropString[1]).to.equal('opps3');
             throw 'get stuffed';
         }
+        
         clientController.modPropString = 'opps3';
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
@@ -431,15 +466,19 @@ describe('Banking Example', function () {
             done(e);
         });
     });
+    
     it('can get a synchronization error from overlapping calls', function (done) {
         this.timeout(7000);
+        
         serverAssert = function () {
             return Q.delay(1000);
         };
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
             });
+        
         clientController.mainFunc()
             .then(function () {
                 expect('Should not be here').to.equal(false);
@@ -462,9 +501,12 @@ describe('Banking Example', function () {
             serverController.__template__.__objectTemplate__.MarkChangedArrayReferences();
             expect(serverController.sam.roles[0].account.__changed__).to.equal(true);
         };
+        
         var balance = clientController.sam.roles[0].account.getBalance();
+        
         serverController.sam.roles[0].account.__changed__ = false;
         clientController.sam.roles[0].account.debit(50);
+        
         clientController.mainFunc().then(function () {
             expect(serverController.sam.roles[0].account.getBalance()).to.equal(balance - 100);
             done();
@@ -472,6 +514,4 @@ describe('Banking Example', function () {
             done(e);
         });
     });
-    
-    
 });
