@@ -1933,7 +1933,7 @@ RemoteObjectTemplate._validateServerIncomingProperty = function (obj, prop, defi
         validator.call(validatorThis, obj, prop, defineProperty, newValue);
     }
 
-
+    return true;
 }
 
 /**
