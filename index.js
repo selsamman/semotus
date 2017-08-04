@@ -1934,6 +1934,10 @@ RemoteObjectTemplate._validateServerIncomingProperty = function (obj, prop, defi
             validator.call(validatorThis, obj, prop, defineProperty, newValue);
         }
         catch(error) {
+    
+            this.logger.error({component: 'semotus', module: 'validateServerIncomingProperty', activity: 'processing'},
+                error);
+            
             throw error;
         }
     }
