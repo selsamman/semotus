@@ -2200,7 +2200,7 @@ RemoteObjectTemplate._rollbackChanges = function rollbackChanges() {
  *
  * @private
  */
-RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, objId, defineProperty, isTransient) {
+RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, objId, defineProperty, isTransient, sessionStore) {
 
     if (!objId) {
         throw new Error('_createEmptyObject called for ' + template.__name__ + ' without objId parameter');
@@ -2212,7 +2212,8 @@ RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, o
 
     template = this._resolveSubClass(template, objId, defineProperty);
 
-    var session = this._getSession();
+    var sessionStore = !!sessionStore ? sessionStore : this;
+    var session = sessionStore._getSession();
     var sessionReference = session ? session.objects[objId] : null;
     var newValue;
 
