@@ -1800,9 +1800,6 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
                     validator.call(validatorThis, obj);
                 }
                 catch(e) {
-                    this.logger.error({component: 'semotus', module: 'applyChanges', activity: 'sync',
-                        data: {change_set: changes, object: obj}}, 'Error syncing: ' + e.message + e.stack);
-    
                     passedObjectValidation = false;
                 }
             }
@@ -1812,9 +1809,6 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
                     this.controller.validateServerIncomingObjects(changes, callContext);
                 }
                 catch(e) {
-                    this.logger.error({component: 'semotus', module: 'applyChangesAndValidateCall', activity: 'sync',
-                        data: {change_set: changes, context: callContext}}, 'Error syncing: ' + e.message + e.stack);
-    
                     passedObjectsValidation = false;
                 }
             }
@@ -1963,10 +1957,6 @@ RemoteObjectTemplate._validateServerIncomingProperty = function (obj, prop, defi
             validator.call(validatorThis, obj, prop, defineProperty, newValue);
         }
         catch(error) {
-    
-            this.logger.error({component: 'semotus', module: 'validateServerIncomingProperty', activity: 'processing'},
-                error);
-            
             return false;
         }
     }
