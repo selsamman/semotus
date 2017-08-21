@@ -1781,6 +1781,7 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
         }
 
         var passedObjectValidation = true;
+        var passedPropertyValidation = true;
         var passedObjectsValidation = true;
         
         if (this.role === 'server') {
@@ -1803,18 +1804,22 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
                     passedObjectValidation = false;
                 }
             }
-    
-            if (this.controller['validateServerIncomingObjects']) {
-                try {
-                    this.controller.validateServerIncomingObjects(changes, callContext);
-                }
-                catch(e) {
-                    passedObjectsValidation = false;
-                }
+        }
+        
+        if (!this._applyObjectChanges(changes, rollback, obj, force)) {
+            passedPropertyValidation = false;
+        }
+        
+        if (this.role === 'server' && this.controller['validateServerIncomingObjects']) {
+            try {
+                this.controller.validateServerIncomingObjects(changes, callContext);
+            }
+            catch(e) {
+                passedObjectsValidation = false;
             }
         }
 
-        if (!obj || !passedObjectValidation || !passedObjectsValidation || !this._applyObjectChanges(changes, rollback, obj, force)) {
+        if (!obj || !passedObjectValidation || !passedPropertyValidation || !passedObjectsValidation) {
             this.processingSubscription = false;
             this._rollback(rollback);
             this._deleteChanges();
