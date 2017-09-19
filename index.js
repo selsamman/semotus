@@ -2269,6 +2269,11 @@ RemoteObjectTemplate._createEmptyObject = function createEmptyObject(template, o
         }
 
         newValue = new template();  // _stashObject will assign this.nextDispenseId if present
+
+        if (!this.__changeTracking__) {
+            newValue.__changed__ = false;
+        }
+
         this.__transient__ = wasTransient;
 
         if (isTransient) {
