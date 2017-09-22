@@ -378,18 +378,16 @@ describe('Banking Example', function () {
             expect(prop).to.equal('modPropString');
             expect(defineProperty.type).to.equal(String)
             expect(val).to.equal('opps');
-            throw 'get stuffed';
         }
         
         clientController.modPropString = 'opps';
         
         clientController.mainFunc()
             .then(function () {
-                expect('Should not be here').to.equal(false);
-            }, function (e) {
-                expect(e.message).to.equal('get stuffed');
                 serverController.validateServerIncomingProperty = null;
                 done();
+            }, function (e) {
+                expect('should not be here').to.equal(false);
             }).fail(function (e) {
             done(e);
         });
@@ -404,18 +402,16 @@ describe('Banking Example', function () {
             expect(prop).to.equal('modPropArray');
             expect(defineProperty.type).to.equal(Array)
             expect(val.length).to.equal(0);
-            throw 'get stuffed';
         }
         
         clientController.modPropArray = [];
         
         clientController.mainFunc()
             .then(function () {
-                expect('Should not be here').to.equal(false);
-            }, function (e) {
-                expect(e.message).to.equal('get stuffed');
                 serverController.validateServerIncomingProperty = null;
                 done();
+            }, function (e) {
+                expect('Should not be here').to.equal(false);
             }).fail(function (e) {
             done(e);
         });
@@ -427,18 +423,16 @@ describe('Banking Example', function () {
         
         serverController.validateServerIncomingObject = function (obj) {
             expect(obj.__template__.__name__).to.equal('Controller');
-            throw 'get stuffed';
         }
         
         clientController.modPropString = 'opps2';
         
         clientController.mainFunc()
             .then(function () {
-                expect('Should not be here').to.equal(false);
-            }, function (e) {
-                expect(e.message).to.equal('get stuffed');
                 serverController.validateServerIncomingObject = null;
                 done();
+            }, function (e) {
+                expect('Should not be here').to.equal(false);
             }).fail(function (e) {
             done(e);
         });
@@ -450,18 +444,16 @@ describe('Banking Example', function () {
         
         serverController.validateServerIncomingObjects = function (changes) {
             expect(changes['client-Controller-1'].modPropString[1]).to.equal('opps3');
-            throw 'get stuffed';
         }
         
         clientController.modPropString = 'opps3';
         
         clientController.mainFunc()
             .then(function () {
-                expect('Should not be here').to.equal(false);
-            }, function (e) {
-                expect(e.message).to.equal('get stuffed');
                 serverController.validateServerIncomingObjects = null;
                 done();
+            }, function (e) {
+                expect('Should not be here').to.equal(false);
             }).fail(function (e) {
             done(e);
         });
