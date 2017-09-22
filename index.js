@@ -1782,7 +1782,6 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
 
         var passedObjectValidation = true;
         var passedPropertyValidation = true;
-        var passedObjectsValidation = true;
         
         if (this.role === 'server') {
             var validator = obj && (obj['validateServerIncomingObject'] || this.controller['validateServerIncomingObject']);
@@ -1809,17 +1808,8 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
         if (!this._applyObjectChanges(changes, rollback, obj, force)) {
             passedPropertyValidation = false;
         }
-        
-        if (this.role === 'server' && this.controller['validateServerIncomingObjects']) {
-            try {
-                this.controller.validateServerIncomingObjects(changes, callContext);
-            }
-            catch(e) {
-                passedObjectsValidation = false;
-            }
-        }
 
-        if (!obj || !passedObjectValidation || !passedPropertyValidation || !passedObjectsValidation) {
+        if (!obj || !passedObjectValidation || !passedPropertyValidation) {
             this.processingSubscription = false;
             this._rollback(rollback);
             this._deleteChanges();
@@ -1827,6 +1817,26 @@ RemoteObjectTemplate._applyChanges = function applyChanges(changes, force, subsc
             this.changeString = {};
             return 0;
         }
+    }
+    
+    var passedObjectsValidation = true;
+    
+    if (this.role === 'server' && this.controller['validateServerIncomingObjects']) {
+        try {
+            this.controller.validateServerIncomingObjects(changes, callContext);
+        }
+        catch(e) {
+            passedObjectsValidation = false;
+        }
+    }
+    
+    if (!passedObjectsValidation) {
+        this.processingSubscription = false;
+        this._rollback(rollback);
+        this._deleteChanges();
+        this.logger.error({component: 'semotus', module: 'applyChanges', activity: 'validateServerIncomingObjects'}, 'Could not apply changes to ' + objId);
+        this.changeString = {};
+        return 0;
     }
 
     /*  We used to delete changes but this means that changes while a message is processed
