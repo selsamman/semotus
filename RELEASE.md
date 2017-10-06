@@ -1,3 +1,5 @@
+## 2.3.7
+* Added error handling when the function to be called by callIfValid is not valid.
 ## 2.3.6
 * Fix to not set __changed__ flag for the objects when restoring the controller from the session
 * if the controller expired in the cache
