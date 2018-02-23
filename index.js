@@ -1,3 +1,5 @@
+'use strict';
+
 /* Copyright 2012-2013 Sam Elsamman
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -516,9 +518,9 @@ RemoteObjectTemplate.processMessage = function processMessage(remoteCall, subscr
             throw new Error(remoteCall.name + ' function does not exist.');
         }
 
-        var arguments = this._fromTransport(JSON.parse(remoteCall.arguments));
+        var args = this._fromTransport(JSON.parse(remoteCall.arguments));
 
-        return obj[remoteCall.name].apply(obj, arguments);
+        return obj[remoteCall.name].apply(obj, args);
     }
 
     /**
