@@ -1,5 +1,3 @@
-'use strict';
-
 /* Copyright 2012-2013 Sam Elsamman
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
@@ -26,6 +24,7 @@
  */
 
 (function (root, factory) {
+    'use strict';
     if (typeof define === 'function' && define.amd) {
         define(['q', 'underscore', 'supertype'], factory);
     }
@@ -36,6 +35,7 @@
         root.RemoteObjectTemplate = factory(root.Q, root._, root.ObjectTemplate);
     }
 }(this, function (Q, _, ObjectTemplate) {
+    'use strict';
 
 const RemoteObjectTemplate = ObjectTemplate._createObject();
 
