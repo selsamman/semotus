@@ -483,16 +483,16 @@ RemoteObjectTemplate.processMessage = function processMessage(remoteCall, subscr
     function applyChangesAndValidateCall() {
         this.logger.info({component: 'semotus', module: 'processMessage', activity: 'call',
             data:{call: remoteCall.name, sequence: remoteCall.sequence, remoteCallId: remoteCall.id}}, remoteCall.name);
-        
+
         let changes = JSON.parse(remoteCall.changes);
-        
+
         if (this._applyChanges(changes, this.role == 'client', subscriptionId, callContext)) {
             const obj = session.objects[remoteCall.id];
 
             if (!obj) {
                 throw new Error('Cannot find object for remote call ' + remoteCall.id);
             }
-            
+
             if (this.role == 'server' && obj['validateServerCall']) {
                 return obj['validateServerCall'].call(obj, remoteCall.name, callContext);
             }
@@ -2591,18 +2591,10 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
 
     this.supertypeClass = function (target) {
 
-	    // Called by decorator processor
-	    if (target.prototype) {
-		    return decorator(target);
-	    }
-
-	    // Called first time with parameter rather than target - call supertypes supertypeClass function which will
-        // return a function that must be called on the 2nd pass when we have a target.  It will remember parameter
-	    let ret = ObjectTemplate.supertypeClass(target, objectTemplate);
-	    return decorator; // decorator will be called 2nd time with ret as a closure
+        let ret;
 
         // Decorator workerbee
-        function decorator(target) {
+        const decorator = function decorator(target) {
 
             // second time we must call the function returned the first time because it has the
             // properties as a closure
@@ -2631,7 +2623,17 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
                 }
             };
             return ret;
-        }
+        };
+
+	    // Called by decorator processor
+	    if (target.prototype) {
+		    return decorator(target);
+	    }
+
+	    // Called first time with parameter rather than target - call supertypes supertypeClass function which will
+        // return a function that must be called on the 2nd pass when we have a target.  It will remember parameter
+        ret = ObjectTemplate.supertypeClass(target, objectTemplate);
+	    return decorator; // decorator will be called 2nd time with ret as a closure
     };
 
     this.Supertype = function () {
