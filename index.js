@@ -2639,6 +2639,8 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
 
     this.property = function (props) {
         props = props || {};
+        props.toClient = applyRuleSet(props.toClient, this.toClientRuleSet);
+        props.toServer = applyRuleSet(props.toServer, this.toServerRuleSet);
         const baseDecorator = ObjectTemplate.property(props, objectTemplate);
         return function (target, targetKey) {
             baseDecorator(target, targetKey);
@@ -2648,6 +2650,15 @@ RemoteObjectTemplate.bindDecorators = function (objectTemplate) {
             objectTemplate._setupProperty(targetKey, props, undefined, defineProperties);
             Object.defineProperties(target, defineProperties);
         };
+
+        function applyRuleSet(prop, ruleSet) {
+            if (prop instanceof Array && prop.length > 0 && ruleSet instanceof Array && ruleSet.length > 0) {
+                return prop.some(r=> ruleSet.indexOf(r) >= 0);
+            }
+            else {
+                return prop;
+            }
+        }
     };
 
     this.remote = function (defineProperty) {
