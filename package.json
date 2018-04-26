@@ -25,7 +25,7 @@
     },
     "scripts": {
         "lint": "eslint .",
-        "test": "istanbul cover _mocha -- test/* -R spec",
+        "test": "istanbul cover _mocha -- test/supertype/semotus.js -R spec",
         "compile": "node ./node_modules/typescript/bin/tsc"
     },
     "directories": {},
